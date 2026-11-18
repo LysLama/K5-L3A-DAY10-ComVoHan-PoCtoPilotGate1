@@ -13,7 +13,7 @@ Họ tên đầy đủ và MSSV của **mọi** thành viên; thêm dòng nếu 
 
 | STT | Họ và tên | MSSV | Vai | Trưởng nhóm |
 | --: | --------- | ---- | --- | :---------: |
-|   1 | `<Ho va ten TV1>` | `2A202603475` | Kỹ sư cổng (Cổng `guards.py`, CLI & Git) | X |
+|   1 | Lý Thanh Lâm | `2A202603475` | Kỹ sư cổng (Cổng `guards.py`, CLI & Git) | X |
 |   2 | `<Ho va ten TV2>` | `<MSSV2>` | Kỹ sư cổng (Đo lường, `monitors.py` & Fault Tree) | |
 |   3 | `<Ho va ten TV3>` | `<MSSV3>` | Sản phẩm và kinh doanh (Tiêu chí, Phiếu A–B & Quyết định) | |
 |   4 | `<Ho va ten TV4>` | `<MSSV4>` | Vận hành và pháp lý (`operating_gates.json`, Phiếu C & Runbook) | |
@@ -67,11 +67,11 @@ Mỗi thành viên tự đổi tiêu đề `## HoVaTenX-MSSVX` bên dưới thà
 
 ---
 
-## HoVaTen1-2A202603475
+## LyThanhLam-2A202603475
 
 ### Phần việc phụ trách
 
-- **Vai trong bàn:** Kỹ sư cổng 1 (Chủ sở hữu `lab10/guards.py`, đầu mối CLI & Git) · **Trưởng nhóm**
+- **Vai trong bàn:** Kỹ sư cổng 1 (Chủ sở hữu `lab10/guards.py`, đầu mối CLI & Git · GitHub: `LysLama`) · **Trưởng nhóm**
 - **File độc quyền sửa:** `lab10/guards.py` *(cùng quyền tổng hợp & push `TEAM.md` và các mốc Git lên `origin main`)*.
 - **Chi tiết từng chặng:**
   - **Phút 0–15 (CP1):** Mời tài khoản team chấm quyền Read; gắn `upstream`; đặt Git local (`2A202603475` / `2A202603475@example.com`); chạy `python -m unittest discover -s tests -v`.
