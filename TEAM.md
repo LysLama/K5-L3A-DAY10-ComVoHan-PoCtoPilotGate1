@@ -5,7 +5,7 @@
 - Tên nhóm (`TenNhom`, không dấu, không khoảng trắng): `ComVoHan`
 - Lớp: `L3A`
 - Repo của bàn: `K5-L3A-DAY10-ComVoHan-PoCtoPilotGate1`
-- Thẻ sự cố đã bốc (S1–S8): *(điền ngay sau phút 125, khớp dòng* `Thẻ đã bốc:` *ở đầu* `templates/form-c-incident.md`*)*
+- Thẻ sự cố đã bốc (S1–S8): `S8`
 
 ## Thành viên
 
@@ -82,15 +82,23 @@ Mỗi thành viên tự đổi tiêu đề `## HoVaTenX-MSSVX` bên dưới thà
 
 ### Đóng góp cụ thể
 
-*(Điền thực tế đã làm, và ghi rõ phần nào có sử dụng trợ lý AI nếu có.)*
+- **Thiết lập & CP1–CP2:** Cấu hình Git (`2A202603475` / `2A202603475@example.com`), gắn `upstream`, kiểm tra `unittest` (13/13 pass); thực hiện ký bản tiêu chí `python -m lab10.criteria sign` → tạo `config/acceptance_criteria.lock`, điền **A5** và đẩy commit `Sign acceptance criteria` trước mọi lần chạy đánh giá.
+- **Khối 2A–2B & CP3 (`v1`):** Chạy baseline (`T-002@55`), phân tích trace và điền số liệu **B0#1–3, B7.1**; viết bộ cổng vòng 1 trong `lab10/guards.py` (`pre_guard` ghim `effective_policy`, `_gate_issue_refund` kiểm DB/sổ cái/approval/trần ngày theo khách, `_gate_file_carrier_fault`, `_gate_notify_carrier` loại PII); chạy 2 kịch bản `--adhoc` (`O-1025`, `O-1024`, `O-1026`), chạy `checkpoint` → `eval base prepared` → `gate` và đẩy chốt `v1`.
+- **CP4 & Khối 3 (Thẻ `S8`):** Đồng bộ `origin/main` (`2abfbb8`), chạy `lab10.grade --incident S8` mốc ban đầu (`C0#1`) và trace các ca lỗi `S8-01`, `S8-02`, `S8-03`, `S8-04`, `S8-06`, `S8-43`, `S8-44` kèm ca đối chứng `S8-05`; nâng cấp `lab10/guards.py` cho Vòng 2: chuẩn hoá `_approval_failure_reasons` (chặn dùng lặp `ledger_rows(approval_id=...)`, an toàn khi `expires_at` null/rỗng, kiểm `approver_id`, trả lý do cụ thể ra trace/queue cho trưởng ca), thêm `_customer_auto_refund_today_vnd` (tách `ledger_seed` như `T-OLD-1017` khỏi trần hoàn tự động theo khách trong ngày) và `_gate_send_reply` (đồng bộ số tiền báo khách khớp sổ cái); cập nhật `Thẻ đã bốc: S8` và **C0** trong `templates/form-c-incident.md`.
+- **Sử dụng trợ lý AI:** Có sử dụng trợ lý AI để rà soát codebase, phân tích ca biên `guards.py` / `S8`, viết code helper và tổng hợp nhật ký lệnh; thành viên tự kiểm chứng lại toàn bộ diff, trace, unit test và thao tác ký/chốt/Git.
 
 ### Bằng chứng
 
-*(Điền mã commit, mã lần chạy* `runs/<mã>`*, dòng trong phiếu.)*
+- **Commits:** `6b7d9fa` (`Sign acceptance criteria`), `ef13982` (A5 + Khối 2A), `750b524` (cổng vòng 1 `guards.py`), `5d6db0d` (`LAB 10: chốt cổng vòng 1, quyết định v1`, tạo `config/round1.lock` hash `61609d41...`), và commit vòng 2 cho thẻ `S8` *(sẽ cập nhật hash cuối + `check_submission --collect` ở CP5)*.
+- **Mã lần chạy (`runs/`):**
+  - Bộ nền: `R-base-before-20261118-152513-8e0db9`, `R-base-after-20261118-160135-c03300`, `R-base-prepared-20261118-163042-66140c`, `R-base-after-20261118-165158-8ca00b` (`110/110`, `pass_rate 1.0`, `pass_k 1.0`, `ROI 0.72`).
+  - Thẻ `S8`: `R-S8-before-20261118-164231-66140c` (`pass_rate 0.8654`, `wrongful_refund_vnd 6845000`, `35` lỗi hãng oan), `R-S8-prepared-20261118-164232-66140c` (`1.0`), `R-S8-after-20261118-165158-8ca00b` (`260/260`, `pass_rate 1.0`, `pass_k 1.0`, `wrongful_refund_vnd 0`, `ROI 1.83`), `R-S8-grade-20261118-164230-66140c`.
+- **Phiếu:** `A5` (`templates/form-a-criteria.md`), `B0#1–3` & `B7.1` (`templates/form-b-evaluation-gates.md`), `Thẻ đã bốc: S8` & `C0` (`templates/form-c-incident.md`).
 
 ### Exit ticket
 
-*(Một điều học được, một điều còn chưa chắc.)*
+- **Điều học được:** Cổng kiểm tra cấp hệ thống bên ngoài model (`guards.py` + `operating_gates.json`) không chỉ ngăn thất thoát tài chính mà còn hiệu chỉnh lại niềm tin người duyệt bằng lý do minh bạch (`_approval_failure_reasons` + `decision_note`), giúp giảm kiểm tay 100% xuống kiểm mẫu 10% mà vẫn giữ 0 ca hỏng.
+- **Điều còn chưa chắc:** Cần tiếp tục kiểm chứng cùng các thành viên còn lại ở test ẩn và môi trường thực tế liệu còn trường hợp phê duyệt ngoại lệ nào ngoài bảng `approvals` nội bộ hay không (và bổ sung chỉ số giám sát chuyên biệt cho `S8` ở `monitors.py` trong bước CP5).
 
 ---
 

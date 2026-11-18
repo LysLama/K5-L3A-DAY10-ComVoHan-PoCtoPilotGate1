@@ -44,24 +44,80 @@ def _truth(ctx, order_id: str | None = None):
     return order, parcel, policy, H.db_delay_days(parcel, ctx.as_of)
 
 
-def _is_valid_approval(appr: dict | None, tid: str, oid: str, cid: str, amount: int,
-                       as_of: str, expected_approver: str) -> bool:
-    """Kiểm tra bản ghi phê duyệt khớp đúng ticket, đơn, khách, còn hạn, đủ hạn mức và đúng người duyệt."""
+def _approval_failure_reasons(ctx, appr: dict | None, tid: str, oid: str, cid: str,
+                              amount: int, expected_approver: str) -> list[str]:
+    """Trả về danh sách lý do phê duyệt không hợp lệ (rỗng = hợp lệ tuyệt đối)."""
     if not appr:
-        return False
-    if appr.get("ticket_id") != tid or appr.get("order_id") != oid or appr.get("customer_id") != cid:
-        return False
-    if appr.get("status") != "valid" or appr.get("expires_at", "") < as_of:
-        return False
-    if int(appr.get("max_vnd") or 0) < amount:
-        return False
-    return not expected_approver or appr.get("approver_id") == expected_approver
+        return ["missing_approval"]
+    reasons = []
+    if appr.get("ticket_id") != tid:
+        reasons.append("wrong_ticket")
+    if appr.get("order_id") != oid:
+        reasons.append("wrong_order")
+    if appr.get("customer_id") != cid:
+        reasons.append("wrong_customer")
+    status = appr.get("status")
+    if status != "valid":
+        reasons.append(f"status={status}")
+    exp = appr.get("expires_at")
+    if not isinstance(exp, str) or not exp:
+        reasons.append("missing_expiry")
+    elif exp < ctx.as_of:
+        reasons.append(f"expired({exp})")
+    raw_max = appr.get("max_vnd")
+    try:
+        max_vnd = int(raw_max) if raw_max is not None else -1
+    except (TypeError, ValueError):
+        max_vnd = -1
+    if max_vnd < amount:
+        reasons.append(f"exceeds_max_vnd({max_vnd}<{amount})")
+    approver = appr.get("approver_id")
+    if not approver:
+        reasons.append("missing_approver")
+    elif expected_approver and approver != expected_approver:
+        reasons.append(f"wrong_approver({approver}!={expected_approver})")
+    aid = appr.get("approval_id")
+    if aid and ctx.tools.ledger_rows(approval_id=aid):
+        reasons.append("already_used_in_ledger")
+    return reasons
+
+
+def _find_valid_approval(ctx, tid: str, oid: str, cid: str, amount: int,
+                         expected_approver: str) -> dict | None:
+    """Tìm một bản ghi phê duyệt hợp lệ chưa dùng khớp đúng ticket, đơn và khách."""
+    return next(
+        (a for a in ctx.tools.lookup_approvals(ticket_id=tid, order_id=oid)
+         if not _approval_failure_reasons(ctx, a, tid, oid, cid, amount, expected_approver)),
+        None,
+    )
+
+
+def _customer_auto_refund_today_vnd(ctx, cid: str) -> int:
+    """Tổng tiền hoàn tự động (không approval_id) trong ngày hôm nay cho đúng khách `cid`.
+
+    Tách riêng các dòng `ledger_seed` từ ngày trước bằng mốc tổng trong ngày `auto_refund_today_vnd()`.
+    """
+    today_total = int(ctx.tools.auto_refund_today_vnd() or 0)
+    if today_total <= 0:
+        return 0
+    running, cust_today = 0, 0
+    for row in reversed(ctx.tools.ledger_rows()):
+        if running >= today_total:
+            break
+        if row.get("approval_id"):
+            continue
+        amt_row = int(row.get("amount_vnd") or 0)
+        if amt_row <= 0:
+            continue
+        running += amt_row
+        if row.get("customer_id") == cid:
+            cust_today += amt_row
+    return cust_today
 
 
 def _gate_issue_refund(ctx, action: dict) -> Verdict:
-    """Cổng 1: đối chiếu DB/chính sách, chặn chi sai/chi trùng, kiểm phê duyệt và trần hoàn theo khách."""
+    """Cổng 1 + Vòng 2 (S8): đối chiếu DB/chính sách, xác thực chặt phê duyệt và trần theo khách trong ngày."""
     tid, oid = action.get("ticket_id"), action.get("order_id")
-    cid = ctx.ticket.get("customer_id")
     amt = int(action.get("amount_vnd") or 0)
 
     if ctx.tools.ledger_rows(ticket_id=tid):
@@ -71,6 +127,7 @@ def _gate_issue_refund(ctx, action: dict) -> Verdict:
     order, parcel, policy, db_delay = _truth(ctx, oid)
     if not order or not parcel or not policy:
         return Verdict.escalate("thiếu dữ liệu đơn hàng/kiện hàng/chính sách trong DB")
+    cid = order.get("customer_id") or ctx.ticket.get("customer_id")
 
     if order.get("refund_status") == "REFUNDED" or ctx.tools.ledger_rows(order_id=oid):
         ctx.log("duplicate_order_refund_blocked", order_id=oid)
@@ -103,26 +160,33 @@ def _gate_issue_refund(ctx, action: dict) -> Verdict:
     auto_limit = int(policy.get("auto_limit_vnd") or 0)
     if amt > auto_limit or appr_id is not None:
         cur = (ctx.tools.lookup_approvals(approval_id=appr_id) or [None])[0] if appr_id else None
-        if not _is_valid_approval(cur, tid, oid, cid, amt, ctx.as_of, expected_approver):
-            valid = next(
-                (a for a in ctx.tools.lookup_approvals(ticket_id=tid, order_id=oid)
-                 if _is_valid_approval(a, tid, oid, cid, amt, ctx.as_of, expected_approver)),
-                None,
-            )
+        reasons = _approval_failure_reasons(ctx, cur, tid, oid, cid, amt, expected_approver)
+        if reasons:
+            valid = _find_valid_approval(ctx, tid, oid, cid, amt, expected_approver)
             if valid:
-                ctx.log("approval_replaced", old=appr_id, new=valid["approval_id"])
+                ctx.log("approval_replaced", old=appr_id, new=valid["approval_id"], old_reasons=reasons)
                 return Verdict.modify("thay thế bằng phê duyệt hợp lệ của đúng ticket", approval_id=valid["approval_id"])
-            ctx.log("invalid_approval_escalated", approval_id=appr_id)
-            return Verdict.escalate("thiếu hoặc phê duyệt không hợp lệ/hết hạn, chuyển người duyệt")
+            detail = ", ".join(reasons)
+            ctx.log("invalid_approval_escalated", approval_id=appr_id, reasons=reasons, detail=detail)
+            return Verdict.escalate(f"phê duyệt không hợp lệ ({detail}), chuyển người duyệt")
+        ctx.log("approval_verified", approval_id=appr_id, approver_id=cur.get("approver_id"),
+                max_vnd=cur.get("max_vnd"), expires_at=cur.get("expires_at"))
         return Verdict.allow()
 
     cust_cap = ctx.tools.ops_limits().get("max_auto_refund_per_customer_per_day_vnd")
     if cust_cap is not None:
-        cust_all_auto = sum(r["amount_vnd"] for r in ctx.tools.ledger_rows(customer_id=cid) if not r.get("approval_id"))
-        cust_today = min(ctx.tools.auto_refund_today_vnd(), cust_all_auto)
+        cust_today = _customer_auto_refund_today_vnd(ctx, cid)
         if cust_today + amt > cust_cap:
+            valid = _find_valid_approval(ctx, tid, oid, cid, amt, expected_approver)
+            if valid:
+                ctx.log("customer_cap_covered_by_approval", approval_id=valid["approval_id"],
+                        customer_id=cid, today=cust_today, asked=amt, cap=cust_cap)
+                return Verdict.modify("dùng phê duyệt hợp lệ vì vượt trần hoàn tự động theo khách trong ngày",
+                                      approval_id=valid["approval_id"])
             ctx.log("customer_daily_auto_cap_escalated", customer_id=cid, today=cust_today, asked=amt, cap=cust_cap)
-            return Verdict.escalate("vượt trần hoàn tự động theo khách trong ngày, chuyển người duyệt")
+            return Verdict.escalate(
+                f"vượt trần hoàn tự động theo khách trong ngày ({cust_today + amt:,}đ > {cust_cap:,}đ), chuyển người duyệt"
+            )
 
     return Verdict.allow()
 
@@ -175,6 +239,20 @@ def _gate_notify_carrier(ctx, action: dict) -> Verdict:
     return Verdict.allow()
 
 
+def _gate_send_reply(ctx, action: dict) -> Verdict:
+    """Bảo đảm số tiền báo khách luôn khớp tổng tiền thực sự đã ghi sổ cái cho ticket."""
+    tid = action.get("ticket_id")
+    paid = sum(int(r.get("amount_vnd") or 0) for r in ctx.tools.ledger_rows(ticket_id=tid))
+    reported = int(action.get("amount_vnd") or 0)
+    if reported != paid:
+        ctx.log("reply_amount_aligned", old=reported, ledger_paid=paid)
+        changes = {"amount_vnd": paid}
+        if paid == 0:
+            changes["text"] = f"Yêu cầu hoàn tiền cho đơn {ctx.ticket.get('order_id', '')} đã bị từ chối ở bước kiểm tra. LogiX chưa hoàn khoản nào cho đơn này."
+        return Verdict.modify("đồng bộ số tiền báo khách khớp sổ cái", **changes)
+    return Verdict.allow()
+
+
 def pre_guard(ctx):
     """Ghim chính sách đang hiệu lực theo ngày hệ thống (as_of) thay cho cờ index_active."""
     policy = H.effective_policy(ctx.tools.lookup_policies(), ctx.as_of)
@@ -185,7 +263,7 @@ def pre_guard(ctx):
 
 
 def write_gate(ctx, action):
-    """Kiểm tra trước mọi lệnh ghi qua hai cổng vòng 1."""
+    """Kiểm tra trước mọi lệnh ghi qua các cổng vòng 1 và vòng 2 (S8)."""
     tool = action.get("tool")
     if tool == "issue_refund":
         return _gate_issue_refund(ctx, action)
@@ -193,4 +271,6 @@ def write_gate(ctx, action):
         return _gate_file_carrier_fault(ctx, action)
     if tool == "notify_carrier":
         return _gate_notify_carrier(ctx, action)
+    if tool == "send_reply":
+        return _gate_send_reply(ctx, action)
     return Verdict.allow()
