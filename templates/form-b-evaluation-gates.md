@@ -316,10 +316,10 @@ Mỗi con số kèm một câu lý do, lấy từ `data/world.json` → `ops_lim
 
 | Khoá | Giá trị bàn đặt | Lý do (một câu, có số) |
 |---|---|---|
-| `business.daily_refund_cap_vnd` | | |
-| `business.cost_budget_per_ticket_vnd` | | |
-| `business.pilot_scope` (all / warehouse / percent) | | |
-| `business.roi_min` | | |
+| `business.daily_refund_cap_vnd` | `1000000` | Đặt bằng **50% ngân sách Finance `2.000.000đ/ngày`** trong `ops_limits.daily_auto_refund_budget_vnd` (cao gấp ~6,4 lần mức ngày thường `155.000đ` ở mốc `base` để không cản ca hợp lệ, nhưng vẫn buộc chuyển người duyệt trước khi chạm trần Finance). |
+| `business.cost_budget_per_ticket_vnd` | `1100` | Lấy trần LLM **`1.500đ/ticket`** (`ops_limits.max_llm_cost_per_ticket_vnd`) trừ sẵn `400đ` cho các bước sau `extract` (`policy_check 200đ + confirm 100đ + decision_note 100đ` trong `ops_facts.llm_cost`) để chặn ticket quá dài trước khi gọi LLM, vẫn dư địa rộng so với mức `670đ` hiện tại. |
+| `business.pilot_scope` (all / warehouse / percent) | `{"mode": "all", "warehouses": [], "percent": 100}` | Chạy 100% (`22 ticket/ngày`, độ phủ `1.0`) ở vòng 1 vì cả 4 kho đơn lẻ hiện có (`HN` `1.993đ`, `HCM` `2.567đ`, `DN` `4.586đ`, `CT` `590đ`) đều rẻ hơn làm tay `10.000đ` (`ROI = 1.38`) và giữ đủ sản lượng chia đều phí giữ chỗ `30.000đ/người trực/ca` (`~1.364đ/ticket`); sẽ thu hẹp theo kho/`%` ở vòng 2 nếu gặp phân khúc lỗ hay ùn hàng chờ. |
+| `business.roi_min` | `0.3` | Khớp đúng ngưỡng `business_ops.roi_min = 0.3` đã ký trong Bản tiêu chí (với giá làm tay `10.000đ` ở `ops_facts`, tương ứng giữ chi phí mỗi ticket `≤ 7.692đ` khi `harm = 0`, vừa bảo đảm có lời tối thiểu 30% vừa đủ dư địa khi tăng 2 người trực + bật `decision_note` + kiểm mẫu `10%`). |
 
 ### B7.5 · Câu 2.10 · Cổng con người, vận hành, pháp lý + Runbook phần 1–3
 
