@@ -91,14 +91,14 @@ Mỗi thành viên tự đổi tiêu đề `## HoVaTenX-MSSVX` bên dưới thà
 
 - **Commits:** `6b7d9fa` (`Sign acceptance criteria`), `ef13982` (A5 + Khối 2A), `750b524` (cổng vòng 1 `guards.py`), `5d6db0d` (`LAB 10: chốt cổng vòng 1, quyết định v1`, tạo `config/round1.lock` hash `61609d41...`), và commit vòng 2 cho thẻ `S8` _(sẽ cập nhật hash cuối + `check_submission --collect` ở CP5)_.
 - **Mã lần chạy (`runs/`):**
-  - Bộ nền: `R-base-before-20261118-152513-8e0db9`, `R-base-after-20261118-160135-c03300`, `R-base-prepared-20261118-163042-66140c`, `R-base-after-20261118-172236-724204` (`110/110`, `pass_rate 1.0`, `pass_k 1.0`, `ROI 0.72`).
-  - Thẻ `S8`: `R-S8-before-20261118-164231-66140c` (`pass_rate 0.8654`, `wrongful_refund_vnd 6845000`, `35` lỗi hãng oan), `R-S8-prepared-20261118-164232-66140c` (`1.0`), `R-S8-after-20261118-172236-724204` (`260/260`, `pass_rate 1.0`, `pass_k 1.0`, `wrongful_refund_vnd 0`, `ROI 1.83`), `R-S8-grade-20261118-172236-724204` (`code_hash 724204e2c496`).
+  - Bộ nền: `R-base-before-20261118-152513-8e0db9`, `R-base-after-20261118-160135-c03300`, `R-base-prepared-20261118-163042-66140c`, `R-base-after-20261118-172236-724204`, `R-base-after-20261118-174630-2cc72a` (`110/110`, `pass_rate 1.0`, `pass_k 1.0`, `ROI 0.72`).
+  - Thẻ `S8`: `R-S8-before-20261118-164231-66140c` (`pass_rate 0.8654`, `wrongful_refund_vnd 6845000`, `35` lỗi hãng oan), `R-S8-prepared-20261118-164232-66140c` (`1.0`), `R-S8-after-20261118-172236-724204`, `R-S8-after-20261118-174629-2cc72a` (`260/260`, `pass_rate 1.0`, `pass_k 1.0`, `wrongful_refund_vnd 0`, `ROI 1.83`), `R-S8-grade-20261118-174630-2cc72a` (`code_hash 2cc72ab74861`).
 - **Phiếu:** `A5` (`templates/form-a-criteria.md`), `B0#1–3` & `B7.1` (`templates/form-b-evaluation-gates.md`), `Thẻ đã bốc: S8` & `C0` (`templates/form-c-incident.md`).
 
 ### Exit ticket
 
 - **Điều học được:** Cổng kiểm tra cấp hệ thống bên ngoài model (`guards.py` + `operating_gates.json`) không chỉ ngăn thất thoát tài chính mà còn hiệu chỉnh lại niềm tin người duyệt bằng lý do minh bạch (`_approval_failure_reasons` + `decision_note`), giúp giảm kiểm tay 100% xuống kiểm mẫu 10% mà vẫn giữ 0 ca hỏng.
-- **Điều còn chưa chắc:** Cần tiếp tục kiểm chứng cùng các thành viên còn lại ở test ẩn và môi trường thực tế liệu còn trường hợp phê duyệt ngoại lệ nào ngoài bảng `approvals` nội bộ hay không (và bổ sung chỉ số giám sát chuyên biệt cho `S8` ở `monitors.py` trong bước CP5).
+- **Điều còn chưa chắc:** Cần tiếp tục kiểm chứng ở bộ test ẩn và môi trường pilot thật liệu còn trường hợp phê duyệt/thu hồi ngoài hệ thống chưa kịp đồng bộ DB `approvals` hoặc chia nhỏ qua nhiều `customer_id` khác nhau hay không trước khi sang Gate 2.
 
 ---
 
