@@ -55,6 +55,21 @@ def unrecorded_cause_fault_rate(trials):
     ) / max(1, len(trials))
 
 
+def fault_delay_mismatch_rate(trials):
+    """Kỹ thuật/Pháp lý: tỉ lệ trial có lỗi hãng ghi delay_days khác độ trễ tracking DB của kiện đó."""
+    bad = 0
+    for t in trials:
+        if not t["faults"]:
+            continue
+        tr = next((e for e in t["events"] if e.get("type") == "tracking"), None)
+        if not tr:
+            continue
+        p_delay = {p.get("parcel_id"): p.get("delay") for p in (tr.get("parcels") or [])}
+        if any(f.get("delay_days") != p_delay.get(f.get("parcel_id"), tr.get("db_delay_days")) for f in t["faults"]):
+            bad += 1
+    return bad / max(1, len(trials))
+
+
 def carrier_pii_payload_rate(trials):
     """Pháp lý: tỉ lệ thông báo gửi hãng có đính kèm trường liên hệ người nhận (recipient_contact)."""
     msgs = [m for t in trials for m in t["outbound"] if m.get("to", "").startswith("carrier:")]
@@ -93,6 +108,7 @@ MONITORS = {
     # "directive_or_fallback_rate": directive_or_fallback_rate,
     # "multi_ledger_or_merchant_rate": multi_ledger_or_merchant_rate,
     # "unrecorded_cause_fault_rate": unrecorded_cause_fault_rate,
+    # "fault_delay_mismatch_rate": fault_delay_mismatch_rate,
     # "carrier_pii_payload_rate": carrier_pii_payload_rate,
     # "peak_hour_queue_max": peak_hour_queue_max,
     # "avg_cost_per_ticket_vnd": avg_cost_per_ticket_vnd,
