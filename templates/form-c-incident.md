@@ -338,9 +338,11 @@ python3 -m lab10.grade --incident Sx
 
 | Nhánh fault tree | Nguyên nhân | Chỗ sửa (hàm + nhánh trong `guards.py`, hoặc khoá trong `operating_gates.json`) | Tầng (phát hiện / chặn / giới hạn thiệt hại / vận hành) | GIẢM khả năng hay NGĂN hẳn? Vì sao | Mã lần chạy sau khi sửa |
 |---|---|---|---|---|---|
-| [1] | | | | | |
-| [2] | | | | | |
-| [3] | | | | | |
+| `[1]` (`[1a]`) | Dùng `approval_id` không hợp lệ (`used`, `revoked`, hết hạn, sai ticket/đơn/khách, `amount > max_vnd`, sai `approver_id`, dùng lại trong `ledger`) do `agent.py` fallback `customer_id` và bỏ qua kiểm tra hiệu lực | `lab10/guards.py`: `write_gate` nhánh `issue_refund` → `_gate_issue_refund` gọi `_approval_failure_reasons` & `_find_valid_approval` (`expires_at` null-safe, single-use `ledger_rows(approval_id=...)`, log chi tiết lý do) + `lab10/monitors.py`: `invalid_approval_or_cap_rate` | **Chặn** + **Phát hiện** | **NGĂN hẳn** trong phạm vi dữ liệu DB: mọi lệnh `issue_refund` vượt `auto_limit_vnd` hoặc gắn `approval_id` phải vượt qua đủ 8 điều kiện hợp lệ mới được ghi sổ cái; sai thì `escalate` kèm lý do. | `R-S8-after-20261118-172236-724204` (`S8` · `260/260` đạt, `0đ` hoàn sai) · `R-base-after-20261118-172236-724204` (`base` · `110/110`, `0` regression) |
+| `[1]` (`[1b]`) | Tách nhiều đơn nhỏ `≤ 200.000đ` cùng khách `C-16` trong ngày vượt trần `300.000đ/khách/ngày` | `lab10/guards.py`: `_gate_issue_refund` gọi `_customer_auto_refund_today_vnd` (tách `ledger_seed` ngày trước qua `auto_refund_today_vnd()`), vượt trần `ops_limits` thì `escalate` (hoặc dùng approval hợp lệ) + `lab10/monitors.py`: `invalid_approval_or_cap_rate` | **Giới hạn thiệt hại** + **Phát hiện** | **NGĂN hẳn** cộng dồn vượt trần trên cùng một `customer_id` trong ngày; **chỉ GIẢM** nếu một người lập nhiều tài khoản `customer_id` khác nhau. | `R-S8-after-20261118-172236-724204` (`S8-43`, `S8-44` được `escalate` đúng; `0đ` vượt trần khách) |
+| `[2]` | Ca CSKH mất niềm tin (`_bad_approval_used`, thiếu `decision_note`, thiếu `approver_id`, `0%` kiểm mẫu) nên kiểm tay `100%` và chỉ có `1` người trực (`6 ca/giờ`) → `36` ca ùn | `config/operating_gates.json` mục `operations`: `decision_note = true`, `approver_id = "NV-HANH"`, `review_sampling_pct = 10`, `reviewers_on_shift = 2`, `review_capacity_per_hour = 12`, `max_queue_wait_minutes = 60`, `pic = "NV-TUNG"` + `lab10/monitors.py`: `recheck_rate`, `peak_hour_queue_max` | **Vận hành** + **Phát hiện** | **GIẢM khả năng** vỡ SLA hàng chờ (`recheck_pct: 100% → 10%`, `stuck: 36 → 0`, `wait_max: 216 → 0.0 phút`, `trust: đạt`); không ngăn hẳn nếu tải thực tế vượt `12 ca/giờ` hoặc nhân viên ngoài đời vẫn kiểm tay khi dùng LLM thật. | `R-S8-after-20261118-172236-724204` (`review_rate: 0.2115`, `0` ca ùn, niềm tin `đạt`) |
+| `[3]` | Trưởng ca `NV-HANH` bị gắn tên đứng duyệt khống trên kiểm toán nội bộ; reply/lỗi hãng đi kèm khi hoàn sai | `lab10/guards.py`: `_gate_issue_refund` (khớp `expected_approver`, log `approval_verified` / `invalid_approval_escalated`), `_gate_send_reply` (đồng bộ `amount_vnd` khớp `ledger`), `_gate_file_carrier_fault` + `config/operating_gates.json` (`legal.carrier_fault_requires_recorded_cause = true`, `pii_fields_blocked_to_third_party`) | **Chặn** + **Trách nhiệm giải trình** | **NGĂN hẳn** việc tự gắn tên `NV-HANH` lên mã duyệt sai trên DB, ngăn reply lệch sổ cái và ngăn ghi lỗi hãng khi khoản hoàn bị chặn (`wrongful_carrier_faults: 35 → 0`); **chỉ GIẢM** nếu bên ngoài quên cập nhật DB khi thu hồi miệng. | `R-S8-after-20261118-172236-724204` (`0` lỗi hãng oan, `0` lộ PII) |
+| `[4]` | Chi phí `11.225đ/ticket > 10.000đ` làm tay, `ROI = -2.45`, cả 4 kho đều lỗ | `config/operating_gates.json` mục `business`: `daily_refund_cap_vnd = 1000000`, `cost_budget_per_ticket_vnd = 1100`, `pilot_scope = all/100%`, `roi_min = 0.3`; kết hợp `operations` (`decision_note = true` giảm công kiểm lại còn `0.4` ca) & `guards.py` chặn hoàn sai + `lab10/monitors.py`: `avg_cost_per_ticket_vnd` | **Vận hành / Kinh doanh** + **Giới hạn thiệt hại** | **GIẢM khả năng** lỗ vận hành (`cost_per_ticket: 11.225đ → 3.529đ`, `ROI: -2.45 → 1.83`, `net_saving: +336.479đ/ngày`, `0/4` kho lỗ); vẫn **GIẢM** vì nếu tỉ lệ `escalated` thực tế tăng vọt thì công duyệt `10.000đ/ca` vẫn đẩy chi phí lên. | `R-S8-after-20261118-172236-724204` *(TV1 sẽ chạy lại `C0#3` sau khi pull `monitors.py`)* |
 
 ---
 
@@ -353,36 +355,45 @@ Thẻ S5 dùng mục này cho một con số kinh doanh: chi phí mỗi ticket t
 
 | | Chỉ số theo dõi mới của bàn |
 |---|---|
-| **Tên trong `MONITORS`** | |
-| **Bước / hành vi được đo** | |
-| **Thước đo** (một câu, có đơn vị) | |
-| **Dữ liệu** (trường nào của trial, không có nhãn) | |
-| **Cách tính** (công thức, mẫu số, cách xử lý ca thiếu dữ liệu) | |
-| **Khung thời gian / ngưỡng báo động** | |
-| **Điểm mù** (chỉ số này KHÔNG thấy gì) | |
-| Giá trị trên bộ nền · trên thẻ (đọc mục `monitor` của report) | |
+| **Tên trong `MONITORS`** | `invalid_approval_or_cap_rate` *(chính · tầng kỹ thuật/quyền hạn)* · kèm cặp `recheck_rate` *(tầng vận hành/niềm tin, cùng đăng ký trong `lab10/monitors.py`)* |
+| **Bước / hành vi được đo** | `invalid_approval_or_cap_rate`: bước kiểm soát phê duyệt & trần hoàn theo khách trước `issue_refund`. `recheck_rate`: bước tổ CSKH mở kiểm lại các quyết định tự động trong hàng chờ. |
+| **Thước đo** (một câu, có đơn vị) | `invalid_approval_or_cap_rate`: tỉ lệ lần chạy bị cổng phát hiện dùng phê duyệt không hợp lệ hoặc vượt trần hoàn tự động theo khách trong ngày (đơn vị: **tỉ lệ 0–1**). `recheck_rate`: tỉ lệ quyết định tự động (`refunded`/`denied`) bị nhân viên đưa vào hàng chờ kiểm lại (đơn vị: **tỉ lệ 0–1**). |
+| **Dữ liệu** (trường nào của trial, không có nhãn) | Không đọc nhãn đúng/sai — lấy từ `monitor_view` của `lab10/eval.py`: `t["events"]` (sự kiện `type == "guard"` có `kind` thuộc `invalid_approval_escalated`, `approval_replaced`, `customer_daily_auto_cap_escalated`, `customer_cap_covered_by_approval`), `t["status"]`, `t["review_kind"]`. |
+| **Cách tính** (công thức, mẫu số, cách xử lý ca thiếu dữ liệu) | `invalid_approval_or_cap_rate = số trial có >= 1 sự kiện guard thuộc 4 kind trên / max(1, len(trials))` (trả về `0.0` nếu rỗng). `recheck_rate = số trial có review_kind == "recheck" / len(auto_done)` với `auto_done = [t for t in trials if t["status"] in ("refunded", "denied")]` (trả về `0.0` nếu `auto_done` rỗng). |
+| **Khung thời gian / ngưỡng báo động** | Chốt theo từng ca `480 phút` / ngày (và theo giờ trên production). `invalid_approval_or_cap_rate`: **Vàng** `> 0.05` (5%) → rà quy trình cấp/thu hồi phê duyệt; **Đỏ** `> 0.15` (15%) → kiểm tra tấn công tách đơn / sai đồng bộ `approvals`. `recheck_rate`: bình thường `0.06–0.12` (khớp `review_sampling_pct = 10%`); **Vàng** `> 0.20` → rà `decision_note`; **Đỏ** `>= 0.50` → báo động sụp niềm tin (như S8), gọi `NV-TUNG` & `NV-HANH`. |
+| **Điểm mù** (chỉ số này KHÔNG thấy gì) | `invalid_approval_or_cap_rate` dựa vào sự kiện `guard` nên không sáng đèn ở mốc `before` khi chưa có cổng và không thấy trường hợp mã phê duyệt được cấp hợp lệ trên DB nhưng sai nghiệp vụ từ đầu; `recheck_rate` không đo được chất lượng kiểm lại thực tế của nhân viên hay lỗi lọt ở nhóm không vào hàng chờ. |
+| Giá trị trên bộ nền · trên thẻ (đọc mục `monitor` của report) | `invalid_approval_or_cap_rate`: mốc `before` (`base = 0.0 · S8 = 0.0`), mốc `after` (**`base = 0.0 · S8 = 0.134615`** — sáng đèn ở `after`). `recheck_rate`: mốc `before` (**`base = 0.0 · S8 = 1.0`** — sáng đèn ở `before`), mốc `after` (**`base = 0.0625 · S8 = 0.088889`** — giảm về quanh mức kiểm mẫu `10%`). |
 
 ---
 
 <a id="c9"></a>
 
-## C9 · Câu 3.7 · Fault tree SAU khi sửa (mã lần chạy: `__________`)
+## C9 · Câu 3.7 · Fault tree SAU khi sửa (mã lần chạy: `R-S8-after-20261118-172236-724204` *(và kiểm lại sau khi TV1 pull `monitors.py`)*)
 
 Vẽ lại cây ở C6. Ở mỗi nhánh đã xử lý, thêm một nút `VÀ [gate … hỏng]` và ghi:
 
 ```
-[ĐỈNH] ______________________________
+[ĐỈNH] Trưởng ca CSKH (NV-HANH) bị đứng tên duyệt khống, mất lòng tin kiểm tay 100%, ùn hàng chờ & lỗ vận hành
  └─ HOẶC
- ├─ [1] ______________ VÀ [gate ______ hỏng]
- ├─ [2] ______________ VÀ [gate ______ hỏng]
- └─ [3] ______________ (còn hở?)
+ ├─ [1a] Agent dùng approval_id INVALID trên issue_refund
+ │       VÀ [gate write_gate._gate_issue_refund._approval_failure_reasons + monitor invalid_approval_or_cap_rate hỏng]
+ ├─ [1b] Agent tách đơn nhỏ vượt trần 300.000đ/khách/ngày
+ │       VÀ [gate write_gate._gate_issue_refund._customer_auto_refund_today_vnd + monitor invalid_approval_or_cap_rate hỏng]
+ ├─ [2]  Ca CSKH chuyển kiểm tay 100% & thiếu công suất trực (1 người → 36 ca ùn)
+ │       VÀ [gate operations (decision_note=true, approver_id=NV-HANH, review_sampling_pct=10, reviewers=2) + monitor recheck_rate hỏng]
+ ├─ [3]  Hệ thống gắn trách nhiệm kiểm toán lên NV-HANH không đồng ý / reply & lỗi hãng sai
+ │       VÀ [gate _approval_failure_reasons + _gate_send_reply + _gate_file_carrier_fault + legal gates hỏng]
+ └─ [4]  Chi phí mỗi ticket > làm tay & ROI âm (-2.45)
+         VÀ [gate business (daily_refund_cap=1M, cost_budget=1100, roi_min=0.3) + operations (decision_note, 2 reviewers) + monitor avg_cost_per_ticket_vnd hỏng]
+         *(còn hở ngoài dữ liệu mock ở tất cả nhánh: thu hồi miệng chưa ghi DB, multi-account, tải vượt 12 ca/giờ & hành vi LLM thật)*
 ```
 
 | Nhánh | Gate (hàm trong `guards.py` / khoá config / metric trong `monitors.py`) | Tầng gate (phát hiện / chặn / giới hạn thiệt hại / vận hành) | Giảm hay ngăn? Vì sao | Nhánh còn hở |
 |---|---|---|---|---|
-| [1] | | | | |
-| [2] | | | | |
-| [3] | | | | |
+| `[1]` (`[1a]`, `[1b]`) | `guards.py`: `_gate_issue_refund` (`_approval_failure_reasons`, `_find_valid_approval`, `_customer_auto_refund_today_vnd`) · `monitors.py`: `invalid_approval_or_cap_rate` | **Chặn** (`[1a]`), **Giới hạn thiệt hại** (`[1b]`) & **Phát hiện** | **NGĂN hẳn** dùng mã phê duyệt sai/đã dùng trong DB và vượt trần trên cùng `customer_id`, vì lệnh ghi bị chặn trước khi vào `ledger` và chuyển `NV-HANH` kèm lý do. | (1) Thu hồi miệng/email chưa cập nhật `approvals.status = "revoked"` trong DB; (2) Một người tách đơn qua nhiều `customer_id` khác nhau. |
+| `[2]` | `operating_gates.json`: `operations.decision_note = true`, `approver_id = "NV-HANH"`, `review_sampling_pct = 10`, `reviewers_on_shift = 2`, `review_capacity_per_hour = 12` · `monitors.py`: `recheck_rate`, `peak_hour_queue_max` | **Vận hành** & **Phát hiện** | **GIẢM khả năng** sụp niềm tin & vỡ SLA (`recheck_pct: 100% → 10%`, `stuck: 36 → 0`, `wait_max: 216 → 0.0 phút`, niềm tin `đạt`), nhờ đủ 4 điều kiện tin cậy và tăng gấp đôi công suất trực. | Lượng ca chuyển người tăng vọt vượt `12 ca/giờ` vào giờ cao điểm thật, hoặc nhân viên thật ngoài đời vẫn nghi ngờ khi đổi từ `MockLLM` sang LLM thật. |
+| `[3]` | `guards.py`: `_gate_issue_refund` (`expected_approver = NV-HANH`, log `approval_verified` / `invalid_approval_escalated`), `_gate_send_reply`, `_gate_file_carrier_fault` · `operating_gates.json`: `legal.*` | **Chặn** & **Trách nhiệm giải trình** | **NGĂN hẳn** tự gắn tên `NV-HANH` lên khoản duyệt không hợp lệ trên DB, ngăn reply lệch sổ cái và ngăn ghi lỗi hãng khi hoàn tiền bị chặn (`35 → 0` lỗi oan). | Kiểm toán/nhân viên vẫn có thể tranh cãi nếu có sai sót ngay ở bước cấp mã `status = "valid"` từ bên ngoài trước khi hệ thống chạy. |
+| `[4]` | `operating_gates.json`: `business` (`daily_refund_cap_vnd = 1000000`, `cost_budget_per_ticket_vnd = 1100`, `roi_min = 0.3`, `pilot_scope = all`) + `operations.decision_note = true` · `monitors.py`: `avg_cost_per_ticket_vnd` | **Vận hành / Kinh doanh** & **Phát hiện** | **GIẢM khả năng** lỗ chi phí (`cost: 11.225đ → 3.529đ`, `ROI: -2.45 → 1.83`, `0/4` kho đắt hơn làm tay), nhờ bỏ công kiểm tay thừa (`unit: 1.0 → 0.4`) và chặn hoàn sai về `0đ`. | Nếu tỉ lệ `escalated` thực tế tăng mạnh (nhiều đơn giá trị cao hoặc nhiều ca thiếu thông tin), công duyệt `10.000đ/ca` có thể kéo chi phí tăng lại. |
 
 ---
 

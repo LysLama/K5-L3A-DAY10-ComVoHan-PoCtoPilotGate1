@@ -109,6 +109,28 @@ def guard_intervention_rate(trials):
     ) / max(1, len(trials))
 
 
+def invalid_approval_or_cap_rate(trials):
+    """S8 (Kỹ thuật/Quyền hạn): tỉ lệ trial bị cổng phát hiện phê duyệt không hợp lệ hoặc vượt trần khách/ngày."""
+    kinds = (
+        "invalid_approval_escalated",
+        "approval_replaced",
+        "customer_daily_auto_cap_escalated",
+        "customer_cap_covered_by_approval",
+    )
+    return sum(
+        any(e.get("type") == "guard" and e.get("kind") in kinds for e in t["events"])
+        for t in trials
+    ) / max(1, len(trials))
+
+
+def recheck_rate(trials):
+    """S8 (Vận hành/Con người): tỉ lệ quyết định tự động (refunded/denied) bị nhân viên kiểm lại."""
+    auto_done = [t for t in trials if t.get("status") in ("refunded", "denied")]
+    if not auto_done:
+        return 0.0
+    return sum(t.get("review_kind") == "recheck" for t in auto_done) / len(auto_done)
+
+
 MONITORS = {
     "escalation_rate": escalation_rate,     # có sẵn; KHÔNG tính là metric mới của đội
     # Monitor nền (Khối 2B):
@@ -121,5 +143,8 @@ MONITORS = {
     "peak_hour_queue_max": peak_hour_queue_max,
     "avg_cost_per_ticket_vnd": avg_cost_per_ticket_vnd,
     "guard_intervention_rate": guard_intervention_rate,
+    # Monitor chuyên biệt sự cố S8 (Khối 3 · Câu 3.6):
+    "invalid_approval_or_cap_rate": invalid_approval_or_cap_rate,
+    "recheck_rate": recheck_rate,
 }
 STARTER_MONITORS = ("escalation_rate",)
