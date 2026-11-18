@@ -89,7 +89,7 @@ Mỗi thành viên tự đổi tiêu đề `## HoVaTenX-MSSVX` bên dưới thà
 
 ### Bằng chứng
 
-- **Commits:** `6b7d9fa` (`Sign acceptance criteria`), `ef13982` (A5 + Khối 2A), `750b524` (cổng vòng 1 `guards.py`), `5d6db0d` (`LAB 10: chốt cổng vòng 1, quyết định v1`, tạo `config/round1.lock` hash `61609d41...`), và commit vòng 2 cho thẻ `S8` _(sẽ cập nhật hash cuối + `check_submission --collect` ở CP5)_.
+- **Commits:** `6b7d9fa` (`Sign acceptance criteria`), `ef13982` (A5 + Khối 2A), `750b524` (cổng vòng 1 `guards.py`), `5d6db0d` (`LAB 10: chốt cổng vòng 1, quyết định v1`, tạo `config/round1.lock` hash `61609d41...`), `0c6992d` (cổng vòng 2 `S8`), `75beda4` (đối chiếu sau `C1`–`C6`), `1860e43` (kiểm chứng tập trung `170–185`), và commit chốt cuối `"LAB 10: bài nộp"` (`check_submission --collect` → `ĐỦ THÀNH PHẦN`).
 - **Mã lần chạy (`runs/`):**
   - Bộ nền: `R-base-before-20261118-152513-8e0db9`, `R-base-after-20261118-160135-c03300`, `R-base-prepared-20261118-163042-66140c`, `R-base-after-20261118-172236-724204`, `R-base-after-20261118-174630-2cc72a` (`110/110`, `pass_rate 1.0`, `pass_k 1.0`, `ROI 0.72`).
   - Thẻ `S8`: `R-S8-before-20261118-164231-66140c` (`pass_rate 0.8654`, `wrongful_refund_vnd 6845000`, `35` lỗi hãng oan), `R-S8-prepared-20261118-164232-66140c` (`1.0`), `R-S8-after-20261118-172236-724204`, `R-S8-after-20261118-174629-2cc72a` (`260/260`, `pass_rate 1.0`, `pass_k 1.0`, `wrongful_refund_vnd 0`, `ROI 1.83`), `R-S8-grade-20261118-174630-2cc72a` (`code_hash 2cc72ab74861`).
@@ -118,19 +118,25 @@ Mỗi thành viên tự đổi tiêu đề `## HoVaTenX-MSSVX` bên dưới thà
 
 ### Đóng góp cụ thể
 
-_(Điền thực tế đã làm, và ghi rõ phần nào có sử dụng trợ lý AI nếu có.)_
+- **Khối 1 (`Phiếu A`):** Làm **Câu 1.3** (`A2` cột Offline) và **Câu 1.5** (`A3` đọc khoảng tin cậy 95%); rà công thức `ops_facts`/`ops_limits` cùng `acceptance_criteria.json` trước khi ký (`6b7d9fa`).
+- **Khối 2A–2B (`Phiếu B` & `monitors.py`):** Phân tích tự chặn vs người duyệt ở **B1**, bảng soát lỗi `T-002@55` ở **B2** (`Câu 2.2`), **Câu 2.7** (`B7.2` chống rò rỉ dữ liệu), **Câu 2.8** (`B7.3` kiểm chứng `--adhoc` trên `O-1025`, `O-1024`, `O-1026`), và kích hoạt 9 hàm monitor nền trong `lab10/monitors.py` (`MONITORS`).
+- **Khối 3 (`Thẻ S8`):** Từ trace TV1 hoàn thiện **C2** (3 lỗi đại diện `S8-01..06`, `S8-43..44`, `S8-60` và `>1` lỗi chìm) và chủ trì **C6** (Fault tree TRƯỚC khi sửa); thiết kế thêm 2 monitor chuyên biệt `S8` trong `lab10/monitors.py` (`invalid_approval_or_cap_rate`, `recheck_rate`) cùng bảng **C8** (`Câu 3.6`), hoàn thiện bảng sửa **C7** và Fault tree SAU **C9**.
+- **Sử dụng trợ lý AI:** Có sử dụng trợ lý AI để phân tích log trace, phác thảo hàm monitor trong `lab10/monitors.py`, rà công thức/điểm mù và tổng hợp Fault tree `C6`/`C9`; thành viên tự kiểm tra số liệu thực tế từ report `lab10.eval` / `lab10.grade`.
 
 ### Bằng chứng
 
-_(Điền mã commit, mã lần chạy_ `runs/<mã>`_, dòng trong phiếu.)_
+- **Commits:** `79eb611` (`1.3, 1.5 and 1.6`), `ce3d5b6` (`B1, B2, 2.8`), `ba6752c` (`2.7`), `d4e22ec` (`C2, C6`), `b6a84e1` (cập nhật `TEAM.md`), `c0e22e4` (`monitors.py` S8 + `C7, C8, C9`).
+- **Code & số liệu:** `lab10/monitors.py` (`invalid_approval_or_cap_rate`: `0.0 → 0.134615`; `recheck_rate`: `before 0.0 → 1.0`, `after 0.0625 → 0.088889` ở `R-S8-grade-20261118-174630-2cc72a`).
+- **Phiếu:** `A2` (Offline), `A3` (`templates/form-a-criteria.md`); `B1`, `B2`, `B7.2`, `B7.3` (`templates/form-b-evaluation-gates.md`); `C2`, `C6`, `C7`, `C8`, `C9` (`templates/form-c-incident.md`).
 
 ### Exit ticket
 
-_(Một điều học được, một điều còn chưa chắc.)_
+- **Điều học được:** Chỉ số theo dõi không dùng nhãn (`monitors.py`) cần đi theo cặp — một thước đo bắt bất thường kỹ thuật (`invalid_approval_or_cap_rate`) và một thước đo bắt hành vi con người/vận hành (`recheck_rate`) — mới nhìn thấy toàn bộ chuỗi sụp lòng tin trên thẻ `S8`.
+- **Điều còn chưa chắc:** Với tập ticket thực tế dài hạn ngoài mock, ngưỡng cảnh báo Vàng/Đỏ của `recheck_rate` (`> 0.20` / `≥ 0.50`) và `invalid_approval_or_cap_rate` (`> 0.05` / `> 0.15`) có cần hiệu chỉnh theo mùa sale hay không.
 
 ---
 
-## HoVaTen3-MSSV3
+## NguyenThanhTung-2A202603446
 
 ### Phần việc phụ trách
 
@@ -146,15 +152,20 @@ _(Một điều học được, một điều còn chưa chắc.)_
 
 ### Đóng góp cụ thể
 
-_(Điền thực tế đã làm, và ghi rõ phần nào có sử dụng trợ lý AI nếu có.)_
+- **Khối 1 · CP2 (`Phiếu A` & `config/acceptance_criteria.json`):** Soạn **Câu 1.1** (`A1`), **Câu 1.6** (`A4`), chốt `required`, `nice_to_have`, `business_ops`, `stop_condition`, 4 dòng `decision_rule` trong `config/acceptance_criteria.json` và gộp hoàn chỉnh `templates/form-a-criteria.md` trước khi TV1 ký ở `6b7d9fa`.
+- **Khối 2 · CP3 (`Phiếu B`):** Hoàn thiện **Câu 2.3** (`B3` bản đồ dữ liệu + drift 3 tháng), điều phối Pre-mortem **B6** (`Câu 2.5`), viết **Câu 2.9** (`B7.4` chốt 4 ngưỡng `business`: `daily_refund_cap_vnd = 1.000.000`, `cost_budget_per_ticket_vnd = 1.100`, `pilot_scope = all/100%`, `roi_min = 0.3`), và chủ trì chốt **B8 Quyết định `v1`: Tiếp tục**.
+- **Khối 3 · CP5 (`Phiếu C`):** Viết **C4** (HAZOP `S8` 4 dòng gồm nhánh ẩn), **Câu 3.2** (`C5` Specification), nhánh kinh doanh `[4]` trong **C6**, **C10** (Risk register 3 dòng gắn `recheck_rate`, `invalid_approval_or_cap_rate`, `escalation_rate`/`peak_hour_queue_max`/`avg_cost_per_ticket_vnd`), và hoàn thiện **C12 Quyết định `v2`: Tiếp tục** + mục "Chỉ ở v2" + 3 dòng bắt buộc (`three_lines`).
+- **Sử dụng trợ lý AI:** Có sử dụng trợ lý AI để kiểm chéo số liệu `ops_facts`/`ops_limits`, rà bảng HAZOP `C4`, Risk register `C10`, và soát lập luận quyết định `v1`/`v2` khớp `decision_rule`; thành viên tự kiểm chứng đối chiếu từng con số trong report.
 
 ### Bằng chứng
 
-_(Điền mã commit, mã lần chạy_ `runs/<mã>`_, dòng trong phiếu.)_
+- **Commits:** `18c54b3` (`Form A & acceptance_criteria.json`), `c6192d7` (`B3`), `327cad3` (`B6`), `6c3d5fb` (`B7.4`), `39756eb` (`CP3 v1`), `14deb91` (`C4, C5 Spec, C6 [4]`), `30bf112` (`C10 Risk register`), cùng phần `C12` + `three_lines` trong commit nộp cuối.
+- **Config & Phiếu:** `config/acceptance_criteria.json` (signed hash `c69feffb...`), `templates/form-a-criteria.md` (`A1–A4`), `templates/form-b-evaluation-gates.md` (`B3, B6, B7.4, B8`), `templates/form-c-incident.md` (`C4, C5 Spec, C6 [4], C10, C12`), và `decision_v1`/`decision_v2`/`three_lines` trong `submission/submission.json`.
 
 ### Exit ticket
 
-_(Một điều học được, một điều còn chưa chắc.)_
+- **Điều học được:** Một quyết định Gate 1 thuyết phục không chỉ nhìn `pass_rate`, mà phải ghép chặt 3 lớp: tiêu chí an toàn ký trước (`required`), bài toán vận hành/kinh tế (`business_ops` · ROI · hàng chờ theo phân khúc), và mốc kiểm lại gắn ngưỡng cụ thể trong `C10`.
+- **Điều còn chưa chắc:** Mức biến động thật của `escalation_rate` và `ROI` khi chuyển sang chính sách `REFUND-v4` ngày `2026-12-01` (`auto_limit_vnd` giảm còn `100.000đ`), cần chạy lại eval trước ngày hiệu lực.
 
 ---
 
@@ -176,15 +187,15 @@ _(Một điều học được, một điều còn chưa chắc.)_
 
 - **Khối 1:** Viết **Câu 1.2** (góc nhìn `NV-OANH` / `NV-HANH`) và **Câu 1.4** (telemetry production: cửa sổ 24 giờ, ngưỡng vàng/đỏ, điểm mù), gửi TV3 gom vào Phiếu A trước khi ký tiêu chí.
 - **Khối 2 · CP3:** Hoàn thiện **B4** (HAZOP vòng 1, gồm ≥ 2 dòng ngoài kỹ thuật) và **B5** (checklist 9 nhóm có PIC); tham gia Pre-mortem **B6** (lăng kính Con người/Vận hành & Pháp lý); điền độc quyền `config/operating_gates.json` (`business` theo số TV3 chốt ở B7.4: trần hoàn ngày `1000000`, LLM/ticket `1100`, `pilot_scope all/100%`, `roi_min 0.3`; `operations`: PIC `NV-TUNG`, duyệt `NV-HANH`, `2` người trực / `12` ca/giờ, SLA `60` phút, `decision_note = true`, kiểm mẫu `10%`, `stop_conditions`, kênh Slack; `legal`: chặn PII + `carrier_fault_requires_recorded_cause = true`); viết **B7.5** Runbook 1–3 và **B7.6** Giờ cao điểm, rồi rà khớp 100% số với JSON.
-- **CP4 (thẻ `S8`):** Ghi `Thẻ đã bốc: S8` vào đầu Phiếu C & `TEAM.md`; gom **C0#1** và điền **C1** (mã `grade`/`base`/`prepared`, cổng vòng 1 đỡ gì trên S8, vượt trần prepared, đối chiếu lại B6 + 1 lý do thiếu về phê duyệt INVALID).
-- **Sử dụng trợ lý AI:** Có dùng trợ lý AI để soạn nháp `operating_gates.json`, Runbook B7.5–B7.6, đối chiếu số JSON↔Runbook và điền C1; tự đọc lại / chỉnh cho khớp `ops_limits`, B7.4 của TV3 và report S8.
+- **Khối 3 & CP4–CP5 (thẻ `S8`):** Ghi `Thẻ đã bốc: S8`, gom **C0#1**, viết **C1**, **C3** (`C3.4` + dòng `C3.1`), **C5 (`Câu 3.3`)**; cập nhật `stop_conditions` (lòng tin `S8`, không tăng sampling lên 100%) & `alert_channel` trong `config/operating_gates.json`; hoàn thiện **C11** (Checklist 9 nhóm có PIC + Runbook 4–5), đồng bộ dòng 9 và hoàn thiện `submission/submission.json`.
+- **Sử dụng trợ lý AI:** Có dùng trợ lý AI để soạn nháp `operating_gates.json`, Runbook B7.5–B7.6 & C11, đối chiếu số JSON↔Runbook và kiểm đủ trường `submission/submission.json`; tự đọc lại / chỉnh cho khớp `ops_limits`, B7.4 và report S8.
 
 ### Bằng chứng
 
-- **Commits liên quan:** `3c52638` (B4/B5), `327cad3` (B6), `bac1edf` (done 2.10 / operating gates + runbook), các chỉnh sync B7.4↔JSON↔Runbook (working tree), và phần `Thẻ đã bốc: S8` + **C1** trên `templates/form-c-incident.md` / `TEAM.md` _(chưa commit nếu còn đang mở)_.
-- **Config:** `config/operating_gates.json` — `daily_refund_cap_vnd=1000000`, `cost_budget_per_ticket_vnd=1100`, `pilot_scope.mode=all`, `roi_min=0.3`, `reviewers_on_shift=2`, `review_capacity_per_hour=12`, `max_queue_wait_minutes=60`, `review_sampling_pct=10`, `decision_note=true`.
-- **Mã lần chạy dùng cho C0#1 / C1:** `R-S8-grade-20261118-164230-66140c`, `R-S8-before-20261118-164231-66140c`, `R-S8-prepared-20261118-164232-66140c` (prepared: `pass_rate 1.0`, hoàn sai `0`, lỗi oan `0`, niềm tin duyệt **đạt**, ROI `1.83`).
-- **Phiếu:** `A1`/`A2` (1.2, 1.4), `B4`, `B5`, `B7.5`, `B7.6` trong `templates/form-b-evaluation-gates.md`; `Thẻ đã bốc: S8`, **C0#1**, **C1** trong `templates/form-c-incident.md`.
+- **Commits liên quan:** `3c52638` (B4/B5), `327cad3` (B6), `bac1edf` (`operating_gates.json` + Runbook B7.5–B7.6), `1232a7c` (fix MSSV), `ad199da` (`C1, C3, C5 3.3`), `c089ffa` & `7ed1af2` (`operating_gates.json` vòng 2 + `C11`), cùng `submission/submission.json` trong commit nộp cuối.
+- **Config:** `config/operating_gates.json` — `daily_refund_cap_vnd=1000000`, `cost_budget_per_ticket_vnd=1100`, `pilot_scope.mode=all`, `roi_min=0.3`, `reviewers_on_shift=2`, `review_capacity_per_hour=12`, `max_queue_wait_minutes=60`, `review_sampling_pct=10`, `decision_note=true`, kèm `stop_conditions` vòng 2 cho `S8`.
+- **Mã lần chạy dùng cho C0#1 / C1 / C11 / CP5:** `R-S8-grade-20261118-164230-66140c` (`base`: `R-S8-before-20261118-164231-66140c`, `prepared`: `R-S8-prepared-20261118-164232-66140c`) và bộ kiểm chứng chốt `R-S8-grade-20261118-174630-2cc72a` (`R-S8-after-20261118-174629-2cc72a`).
+- **Phiếu & nộp:** `A1`/`A2` (1.2, 1.4), `B4`, `B5`, `B7.5`, `B7.6` (`templates/form-b-evaluation-gates.md`); `Thẻ đã bốc: S8`, **C1, C3, C5 (3.3), C11** (`templates/form-c-incident.md`); `submission/submission.json`.
 
 ### Exit ticket
 

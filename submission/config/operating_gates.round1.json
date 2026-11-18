@@ -1,0 +1,28 @@
+{
+  "_huong_dan": "Cổng kinh doanh, vận hành, pháp lý mà trợ lý PHẢI tuân theo. Bàn điền ở vòng 1, chốt bằng python3 -m lab10.checkpoint, rồi được sửa tiếp ở vòng 2. null = chưa đặt cổng này. Giải thích từng dòng: docs/guide.md, mục Cổng trong config (#ban-do).",
+  "business": {
+    "daily_refund_cap_vnd": 1000000,
+    "cost_budget_per_ticket_vnd": 1100,
+    "pilot_scope": {"mode": "all", "warehouses": [], "percent": 100},
+    "roi_min": 0.3
+  },
+  "operations": {
+    "pic": "NV-TUNG",
+    "approver_id": "NV-HANH",
+    "reviewers_on_shift": 2,
+    "review_capacity_per_hour": 12,
+    "max_queue_wait_minutes": 60,
+    "stop_conditions": [
+      "Dừng một phần: tắt issue_refund và/hoặc file_carrier_fault trong config/switches.json khi wrongful_refund_vnd > 0 hoặc wrongful_carrier_faults >= 2 trong một ngày, hoặc hàng chờ có ca chờ > 60 phút liên tiếp trong 2 giờ.",
+      "Dừng một phần: thu hẹp business.pilot_scope (chuyển mode warehouse/percent, bỏ kho vượt trần chi phí/an toàn) khi cost_per_ticket_vnd > 7000 hoặc ROI < 0.3 trên phân khúc đó.",
+      "Dừng hẳn trợ lý: tắt cả 4 công tắc ghi khi pii_leaks > 0, hoặc sau khi đã thu hẹp mà chi phí vẫn > 10000đ/ticket / ROI âm kéo dài."
+    ],
+    "alert_channel": "Slack #logix-cskh-ops (CC NV-TUNG, NV-HANH)",
+    "decision_note": true,
+    "review_sampling_pct": 10
+  },
+  "legal": {
+    "pii_fields_blocked_to_third_party": ["recipient_contact", "customer_note", "name", "phone", "street"],
+    "carrier_fault_requires_recorded_cause": true
+  }
+}

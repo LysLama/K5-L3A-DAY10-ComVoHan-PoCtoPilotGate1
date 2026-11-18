@@ -1,12 +1,17 @@
 {
-  "team": "",
-  "members": [],
-  "incident": "",
-  "decision_v1": "",
-  "decision_v2": "",
+  "team": "K5-L3A-DAY10-ComVoHan-PoCtoPilotGate1",
+  "members": [
+    "LyThanhLam-2A202603475",
+    "VuTriDung-2A202603478",
+    "NguyenThanhTung-2A202603446",
+    "PhamTrungKien-2A202603479"
+  ],
+  "incident": "S8",
+  "decision_v1": "Tiếp tục",
+  "decision_v2": "Tiếp tục",
   "three_lines": {
-    "environment_assumption": "",
-    "reduce_or_prevent": "",
-    "measure_in_pilot": ""
+    "environment_assumption": "Thiết kế đang giả định mọi bản ghi trong bảng approvals (status = \"valid\", expires_at >= as_of, max_vnd) phản ánh đúng ý chí phê duyệt tại thời điểm chi tiền và một cá nhân chỉ dùng một customer_id, nhưng thực tế trưởng ca NV-HANH có thể thu hồi miệng/email chưa kịp cập nhật DB hoặc người mua tách đơn qua nhiều tài khoản, làm lọt tới trần 1.000.000đ/ngày (business.daily_refund_cap_vnd) và khiến ca CSKH quay lại kiểm tay 100% như S8 (từng làm wait_max = 216 phút, 36 ca ùn).",
+    "reduce_or_prevent": "Các gate mới NGĂN hẳn dùng mã duyệt sai/hết hạn/thu hồi/đã ghi sổ (_approval_failure_reasons: wrongful_refund_vnd 6.845.000đ -> 0đ, lỗi oan 35 -> 0) và vượt trần 300.000đ/khách/ngày trên cùng customer_id nhờ chặn trước issue_refund ở mức code xác định ngoài LLM; tuy nhiên phần vận hành chỉ GIẢM khả năng mất niềm tin và ùn hàng chờ (recheck 100% -> 10%, 36 -> 0 ca ùn, 3.529đ/ticket) vì thu hồi miệng chưa ghi DB, tách nhiều customer_id, hoặc tải thực vượt 12 ca/giờ vẫn có thể xảy ra ngoài phần mềm.",
+    "measure_in_pilot": "Trước Bước đánh giá 2 (mốc 2026-11-25 và trước khi đổi sang REFUND-v4 ngày 2026-12-01), cần đo lại trên dữ liệu pilot thật: tỉ lệ nhân viên CSKH tự mở kiểm lại thực tế (recheck_rate, giữ 0.06–0.12 thay vì quay lại 1.0), số ca bị chặn/chuyển duyệt vì lệch hoặc thu hồi phê duyệt (invalid_approval_or_cap_rate < 0.05), thời gian chờ hàng duyệt p95 so với SLA 60 phút (peak_hour_queue_max <= 12 ca/giờ), và chi phí thực + ROI (<= 7.000đ/ticket, ROI >= 0.3) khi dùng LLM thật thay cho MockLLM."
   }
 }
