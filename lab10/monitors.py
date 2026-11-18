@@ -101,16 +101,25 @@ def avg_cost_per_ticket_vnd(trials):
     return sum(t.get("cost_vnd", 0) for t in trials) / max(1, len(trials))
 
 
+def guard_intervention_rate(trials):
+    """Hệ thống: tỉ lệ trial có can thiệp của cổng (pre_guard / gate / business_gate / legal_gate)."""
+    return sum(
+        any(e.get("type") in ("pre_guard", "gate", "business_gate", "legal_gate") for e in t["events"])
+        for t in trials
+    ) / max(1, len(trials))
+
+
 MONITORS = {
     "escalation_rate": escalation_rate,     # có sẵn; KHÔNG tính là metric mới của đội
-    # Bỏ comment ở Khối 2B / Khối 3 để kích hoạt các chỉ số phù hợp với sự cố:
-    # "model_override_rate": model_override_rate,
-    # "directive_or_fallback_rate": directive_or_fallback_rate,
-    # "multi_ledger_or_merchant_rate": multi_ledger_or_merchant_rate,
-    # "unrecorded_cause_fault_rate": unrecorded_cause_fault_rate,
-    # "fault_delay_mismatch_rate": fault_delay_mismatch_rate,
-    # "carrier_pii_payload_rate": carrier_pii_payload_rate,
-    # "peak_hour_queue_max": peak_hour_queue_max,
-    # "avg_cost_per_ticket_vnd": avg_cost_per_ticket_vnd,
+    # Monitor nền (Khối 2B):
+    "model_override_rate": model_override_rate,
+    "fault_delay_mismatch_rate": fault_delay_mismatch_rate,
+    "directive_or_fallback_rate": directive_or_fallback_rate,
+    "multi_ledger_or_merchant_rate": multi_ledger_or_merchant_rate,
+    "unrecorded_cause_fault_rate": unrecorded_cause_fault_rate,
+    "carrier_pii_payload_rate": carrier_pii_payload_rate,
+    "peak_hour_queue_max": peak_hour_queue_max,
+    "avg_cost_per_ticket_vnd": avg_cost_per_ticket_vnd,
+    "guard_intervention_rate": guard_intervention_rate,
 }
 STARTER_MONITORS = ("escalation_rate",)
