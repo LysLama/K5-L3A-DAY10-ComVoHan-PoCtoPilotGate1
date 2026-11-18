@@ -24,8 +24,8 @@ rồi mới chạy đánh giá. Khối 1 không sửa code.
 
 ### Câu 1.2 · Mục tiêu nhìn từ hai người
 
-- Chị Oanh, kế toán đối soát (không dùng trợ lý, nhưng phải khớp sổ với hãng và shop mỗi tuần): …
-- Chị Hạnh, trưởng ca CSKH (phải duyệt những ca trợ lý chuyển sang): …
+- Chị Oanh, kế toán đối soát (`NV-OANH`; không dùng trợ lý, nhưng phải khớp sổ với hãng và shop mỗi tuần): mỗi tuần, dòng sổ chị khớp với hãng và shop chỉ gồm khoản hoàn phí ship đúng phạm vi pilot PRD v1.1 §2 — một đơn, giao trễ hoặc hư hỏng đã xác minh, đúng principal gọi yêu cầu, số tiền không vượt `approved_vnd` và không vượt `paid_vnd - already_refunded_vnd`. PRD §6 ghi chưa đo trên người dùng thật (mới có MockLLM), nên sổ tuần của chị là bằng chứng thật đầu tiên. Chị đối chiếu `refund_ledger`, không tin câu reply: eval card đã loại judge `helpful` (κ=0.375, bỏ sót 21/30 ca nói sai số tiền) và PRD chặn release khi `reply_amount_matches_ledger` < 1 (FM-08).
+- Chị Hạnh, trưởng ca CSKH (`NV-HANH`; phải duyệt những ca trợ lý chuyển sang): mọi claim ngoài phạm vi §2 (nhiều đơn, tranh chấp ngoài chính sách, việc phải tra ngoài SQLite thế giới đóng) phải dừng ở chị, không được tự hoàn. Eval card và PRD §6 nói bộ đo Lab 9 không đại diện production: MockLLM, 14 item v1 có CI rộng, bug xuất hiện khoảng 1/3 seed không bị 5 seed bắt ổn định. Chị không đứng tên một khoản chỉ vì gate Lab 9 đang xanh; ca tới tay chị vẫn phải nằm trong sức một ca trực (`ops_facts`: hạn chờ 60 phút, 6 ca/giờ/người).
 
 ---
 
@@ -48,12 +48,12 @@ trợ lý có đang gây thiệt hại cho bên ngoài LogiX không; không có 
 
 | | Offline, cho MỘT bước (câu 1.3) | Telemetry production (câu 1.4) |
 |---|---|---|
-| **Bước / hành vi được đo** | | |
-| **Thước đo** (một câu, có đơn vị) | | |
-| **Dữ liệu** (lấy ở đâu, bao nhiêu, ai gán nhãn) | | |
-| **Cách tính** (công thức, mẫu số, cách xử lý ca thiếu dữ liệu) | | |
-| **Khung thời gian / ngưỡng báo động** | (không áp dụng) | |
-| **Điểm mù** (thước đo này KHÔNG thấy gì) | | |
+| **Bước / hành vi được đo** | | Ba việc làm người ngoài cuộc chịu thiệt, lấy từ PRD §4 và eval card (an toàn chặn release ở mức 0): ghi sổ hoàn cho sai principal hoặc vượt trần §2 (FM-07, shop/hãng bị trừ sai); reply nói số tiền khác `refund_ledger` (FM-08, shop và khách làm theo câu nói); lộ secret/PII ra output hoặc thông báo gửi hãng (FM-01 `secret_leak`, FM-09 lẫn principal). |
+| **Thước đo** (một câu, có đơn vị) | | Số ticket production có ít nhất một trong ba việc trên, trên 1.000 ticket có ghi sổ hoặc có tin gửi ra ngoài, trong cửa sổ 24 giờ. Đơn vị: ticket / 1.000. |
+| **Dữ liệu** (lấy ở đâu, bao nhiêu, ai gán nhãn) | | Log production (reply, thông báo gửi hãng, dòng `refund_ledger`) đối chiếu đơn trong DB: `principal_id`, `approved_vnd`, `paid_vnd`, `already_refunded_vnd`, và danh sách `forbid_substrings` của grader `SecretLeak`. Không có nhãn người. Không dùng judge `helpful` (eval card: κ=0.375, bỏ sót 21/30). `tone_ok` không đưa vào thước này (PRD §6: mới chấm trên reply replay, không đo tiền). Sổ tuần của chị Oanh chỉ để kiểm lại sau. |
+| **Cách tính** (công thức, mẫu số, cách xử lý ca thiếu dữ liệu) | | Tử số = số ticket trong 24 giờ có ít nhất một việc: số tiền parse từ reply ≠ số trên ledger; dòng ledger có `principal_id` khác người gọi, hoặc số tiền > `approved_vnd`, hoặc số tiền > `paid_vnd - already_refunded_vnd`; tin gửi ra ngoài chứa chuỗi cấm (tên, số điện thoại, địa chỉ của người không phải bên trong cuộc). Mẫu số = số ticket cùng cửa sổ có ít nhất một dòng ledger hoặc một tin gửi ra. Ticket không có bản ghi đơn trong DB bị loại khỏi mẫu số, đếm riêng thành "thiếu dữ liệu", không tính là vi phạm (PRD §2: việc phải tra ngoài thế giới đóng thì không tự xử). |
+| **Khung thời gian / ngưỡng báo động** | (không áp dụng) | Cửa sổ 24 giờ, chốt mỗi giờ. Cùng luật chặn release của eval card: `secret_leak` và `approval_bypass` max 0, `reply_amount_matches_ledger` min 1.0. Vàng: từ 1 ticket "thiếu dữ liệu" (không có bản ghi đơn) trong 1 giờ — chuyển chị Hạnh, không tự ghi. Đỏ: từ 1 ticket dính FM-01, FM-08 hoặc vượt trần §2 trong 24 giờ — tắt `issue_refund` và `notify_carrier`; người bấm là `NV-TUNG`. Chị Oanh đánh dấu dòng sổ của tuần đó. |
+| **Điểm mù** (thước đo này KHÔNG thấy gì) | | Không thấy khi chính DB sai: ghi "khớp ledger" vẫn hại shop hoặc hãng. Không thấy bug hiếm khoảng 1/3 seed mà eval card nói 5 seed không bắt ổn định, nếu trong 24 giờ nó chưa xảy ra. Không thấy khiếu nại tới sau 24 giờ. Không thấy ca không ghi sổ và không gửi tin (không vào mẫu số). Không thay được đo trên người dùng thật mà PRD §6 còn để trống. |
 
 **Ví dụ mẫu (bước "chọn độ trễ" của agent, đừng chép):**
 Thước đo: tỉ lệ lần chạy mà độ trễ agent dùng để tính tiền khác độ trễ theo tracking DB. Dữ liệu: sự kiện `proposal.delay_days_used`
