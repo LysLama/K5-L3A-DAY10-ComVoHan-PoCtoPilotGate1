@@ -5,7 +5,7 @@
 - Tên nhóm (`TenNhom`, không dấu, không khoảng trắng): `ComVoHan`
 - Lớp: `L3A`
 - Repo của bàn: `K5-L3A-DAY10-ComVoHan-PoCtoPilotGate1`
-- Thẻ sự cố đã bốc (S1–S8): `S8`
+- Thẻ đã bốc: `S8`
 
 ## Thành viên
 
@@ -158,28 +158,35 @@ Mỗi thành viên tự đổi tiêu đề `## HoVaTenX-MSSVX` bên dưới thà
 
 ---
 
-## HoVaTen4-MSSV4
+## PhamTrungKien-2A202603479
 
 ### Phần việc phụ trách
 
-- **Vai trong bàn:** Vận hành và pháp lý (**Chủ sở hữu** `config/operating_gates.json` **· Form Keeper Phiếu C ·** `submission.json`)
+- **Vai trong bàn:** Vận hành và pháp lý (**Chủ sở hữu** `config/operating_gates.json` **· Form Keeper Phiếu C ·** `submission.json`) · Họ tên: Phạm Trung Kiên · MSSV: `2A202603479`
 - **File độc quyền sửa:** `config/operating_gates.json` *(cả 3 nhóm* `business`*,* `operations`*,* `legal`*)*, `templates/form-c-incident.md`, `submission/submission.json`.
 - **Đầu ra bàn giao:** Gửi `1.2`, `1.4` cho TV3 vào Phiếu A; gửi `B4`, `B5`, `B7.5`, `B7.6` cho TV3 vào Phiếu B; giao `config/operating_gates.json`, `form-c-incident.md`, `submission.json` sạch lỗi cho TV1 chạy `checkpoint` / `grade` / `--collect`.
 - **Chi tiết từng chặng:**
   - **Phút 0–15 (CP1):** Thu thập họ tên + MSSV của 4 thành viên gửi TV1 điền `TEAM.md`; đọc mẫu `submission/submission.json`.
   - **Phút 15–65 (Khối 1):** Làm **Câu 1.2** (`A1` — góc nhìn chị Oanh `NV-OANH` và chị Hạnh `NV-HANH` từ PRD §2, §6 & `data/world.json`) và **Câu 1.4** (`A2` cột Telemetry production — thêm khung thời gian, ngưỡng báo động, điểm mù), gửi TV3 trước phút 55; trong thời gian còn lại **dựng trước khung Checklist 9 nhóm (**`B5`**), bản nháp thông số** `operations`**/**`legal` **(**`staff`**,** `ops_limits`**) và khung Runbook 1–3 (**`B7.5`**)**.
-  - **Phút 65–115 (Khối 2 · CP3):** Hoàn thiện **Câu 2.4** (**B4** HAZOP vòng 1 ≥ 3 dòng + ≥ 2 dòng ngoài kỹ thuật; **B5** Checklist go-live 9 nhóm có PIC có tên từng dòng); tham gia Pre-mortem **B6** (lăng kính Con người/Vận hành & Pháp lý); làm **Câu 2.10** — điền toàn bộ `config/operating_gates.json` (gồm `business` nhận từ TV3 + `operations` & `legal`), viết **B7.5** (Runbook 1–3 khớp con số config, ghi rõ thời hạn dừng tối đa & người bấm) và **B7.6** (Giờ cao điểm); gửi toàn bộ mục trên cho TV3 dán vào Phiếu B trước phút 105.
-  - **Phút 125–200 (Khối 3 · CP4–CP5):** Phút 125: ghi đúng số thẻ vào dòng `Thẻ đã bốc:` ở đầu `templates/form-c-incident.md` và `TEAM.md`; gom `C0#1`, `C1` (Pre-mortem & vượt trần vận hành mốc `prepared`); làm **C3** (phần riêng theo đúng số thẻ đã bốc; *lưu ý thẻ* `S4` *miễn* `C3`*, chỉ cần bổ sung* `B7.6` *+* `C1`) và **Câu 3.3** (`C5` — 1 giả định môi trường ngầm tin có thể sai); bổ sung nhánh vận hành/pháp lý vào **C6**; sửa `config/operating_gates.json` theo hướng xử lý vòng 2 (`Câu 3.5`); viết **C11** (cập nhật Checklist 9 nhóm có PIC + Runbook phần 4–5); gom đủ `C0`–`C12` vào `templates/form-c-incident.md`; điền hoàn chỉnh `submission/submission.json` (`team`, `members` dạng `"HoVaTen-MSSV"` khớp `TEAM.md`, `incident`, `decision_v1`, `decision_v2`, chép nguyên `three_lines` từ `C12`) để TV1 chạy `check_submission --collect` tới `ĐỦ THÀNH PHẦN`.
+  - **Phút 65–115 (Khối 2 · CP3):** Hoàn thiện **Câu 2.4** (**B4** HAZOP vòng 1 ≥ 3 dòng + ≥ 2 dòng ngoài kỹ thuật; **B5** Checklist go-live 9 nhóm có PIC có tên từng dòng); tham gia Pre-mortem **B6** (lăng kính Con người/Vận hành & Pháp lý); làm **Câu 2.10** — điền toàn bộ `config/operating_gates.json` (gồm `business` nhận từ TV3 + `operations` & `legal`), viết **B7.5** (Runbook 1–3 khớp con số config, ghi rõ thời hạn dừng tối đa & người bấm) và **B7.6** (Giờ cao điểm); gửi toàn bộ mục trên cho TV3 dán vào Phiếu B trước phút 105. Phút 105–115: rà khớp 100% con số giữa `operating_gates.json` và Runbook 1–3.
+  - **Phút 125–200 (Khối 3 · CP4–CP5):** Phút 125: ghi đúng số thẻ vào dòng `Thẻ đã bốc:` ở đầu `templates/form-c-incident.md` và `TEAM.md`; gom `C0#1`, `C1` (Pre-mortem & vượt trần vận hành mốc `prepared`); làm **C3** (phần riêng theo đúng số thẻ đã bốc; *thẻ* `S8` → `C3.4` + một dòng “hoàn trên hạn mức” ở `C3.1`) và **Câu 3.3** (`C5` — 1 giả định môi trường ngầm tin có thể sai); bổ sung nhánh vận hành/pháp lý vào **C6**; sửa `config/operating_gates.json` theo hướng xử lý vòng 2 (`Câu 3.5`); viết **C11** (cập nhật Checklist 9 nhóm có PIC + Runbook phần 4–5); gom đủ `C0`–`C12` vào `templates/form-c-incident.md`; điền hoàn chỉnh `submission/submission.json` (`team`, `members` dạng `"HoVaTen-MSSV"` khớp `TEAM.md`, `incident`, `decision_v1`, `decision_v2`, chép nguyên `three_lines` từ `C12`) để TV1 chạy `check_submission --collect` tới `ĐỦ THÀNH PHẦN`.
   - **Phút 200–240 (Demo & Nộp):** Trình bày phần nhân sự trực, niềm tin người duyệt, pháp lý bên thứ ba và runbook lúc demo; gửi phần cá nhân `TEAM.md` cho TV1 và tự nộp link repo trên LMS.
 
 ### Đóng góp cụ thể
 
-*(Điền thực tế đã làm, và ghi rõ phần nào có sử dụng trợ lý AI nếu có.)*
+- **Khối 1:** Viết **Câu 1.2** (góc nhìn `NV-OANH` / `NV-HANH`) và **Câu 1.4** (telemetry production: cửa sổ 24 giờ, ngưỡng vàng/đỏ, điểm mù), gửi TV3 gom vào Phiếu A trước khi ký tiêu chí.
+- **Khối 2 · CP3:** Hoàn thiện **B4** (HAZOP vòng 1, gồm ≥ 2 dòng ngoài kỹ thuật) và **B5** (checklist 9 nhóm có PIC); tham gia Pre-mortem **B6** (lăng kính Con người/Vận hành & Pháp lý); điền độc quyền `config/operating_gates.json` (`business` theo số TV3 chốt ở B7.4: trần hoàn ngày `1000000`, LLM/ticket `1100`, `pilot_scope all/100%`, `roi_min 0.3`; `operations`: PIC `NV-TUNG`, duyệt `NV-HANH`, `2` người trực / `12` ca/giờ, SLA `60` phút, `decision_note = true`, kiểm mẫu `10%`, `stop_conditions`, kênh Slack; `legal`: chặn PII + `carrier_fault_requires_recorded_cause = true`); viết **B7.5** Runbook 1–3 và **B7.6** Giờ cao điểm, rồi rà khớp 100% số với JSON.
+- **CP4 (thẻ `S8`):** Ghi `Thẻ đã bốc: S8` vào đầu Phiếu C & `TEAM.md`; gom **C0#1** và điền **C1** (mã `grade`/`base`/`prepared`, cổng vòng 1 đỡ gì trên S8, vượt trần prepared, đối chiếu lại B6 + 1 lý do thiếu về phê duyệt INVALID).
+- **Sử dụng trợ lý AI:** Có dùng trợ lý AI để soạn nháp `operating_gates.json`, Runbook B7.5–B7.6, đối chiếu số JSON↔Runbook và điền C1; tự đọc lại / chỉnh cho khớp `ops_limits`, B7.4 của TV3 và report S8.
 
 ### Bằng chứng
 
-*(Điền mã commit, mã lần chạy* `runs/<mã>`*, dòng trong phiếu.)*
+- **Commits liên quan:** `3c52638` (B4/B5), `327cad3` (B6), `bac1edf` (done 2.10 / operating gates + runbook), các chỉnh sync B7.4↔JSON↔Runbook (working tree), và phần `Thẻ đã bốc: S8` + **C1** trên `templates/form-c-incident.md` / `TEAM.md` *(chưa commit nếu còn đang mở)*.
+- **Config:** `config/operating_gates.json` — `daily_refund_cap_vnd=1000000`, `cost_budget_per_ticket_vnd=1100`, `pilot_scope.mode=all`, `roi_min=0.3`, `reviewers_on_shift=2`, `review_capacity_per_hour=12`, `max_queue_wait_minutes=60`, `review_sampling_pct=10`, `decision_note=true`.
+- **Mã lần chạy dùng cho C0#1 / C1:** `R-S8-grade-20261118-164230-66140c`, `R-S8-before-20261118-164231-66140c`, `R-S8-prepared-20261118-164232-66140c` (prepared: `pass_rate 1.0`, hoàn sai `0`, lỗi oan `0`, niềm tin duyệt **đạt**, ROI `1.83`).
+- **Phiếu:** `A1`/`A2` (1.2, 1.4), `B4`, `B5`, `B7.5`, `B7.6` trong `templates/form-b-evaluation-gates.md`; `Thẻ đã bốc: S8`, **C0#1**, **C1** trong `templates/form-c-incident.md`.
 
 ### Exit ticket
 
-*(Một điều học được, một điều còn chưa chắc.)*
+- **Điều học được:** Niềm tin người duyệt không sửa được chỉ bằng “chặn tiền”; phải khớp bộ ba `decision_note` + kiểm mẫu + `approver_id` đúng người đứng tên với `stop_conditions`/`alert_channel` trong runbook, thì mới hạ được kiểm tay 100% xuống kiểm mẫu mà không ùn hàng chờ.
+- **Điều còn chưa chắc:** Sau vòng 2 S8, chưa chắc các biến thể phê duyệt INVALID (dùng lại / hết hạn / thu hồi / vượt `max_vnd`) đã được cover hết ở test ẩn, và `operating_gates.json` còn cần chỉnh thêm nhân sự/trần nào trước khi chốt **C11** + `submission.json`.
