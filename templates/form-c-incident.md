@@ -400,26 +400,33 @@ Ghi các dòng đổi sau sự cố. Mỗi dòng vẫn phải có một PIC có 
 
 | # nhóm | Trạng thái mới (Xong / Chưa / Không áp dụng) | Bằng chứng mới (mã lần chạy, mục phiếu, số trong report) | PIC |
 |---|---|---|---|
-| | | | |
-| | | | |
+| 1 · Chất lượng | **Xong** | `R-S8-after-20261118-165158-8ca00b` / `R-S8-after-20261118-170055-724204`: `pass_rate=1.0`, `pass_k=1.0`, `wrongful_refund_vnd=0`, `wrongful_carrier_faults=0`, `pii_leaks=0` (260/260 trials); bộ nền `R-base-after-20261118-165158-8ca00b` không regression | Vũ Trí Dũng |
+| 2 · Dữ liệu | **Xong** *(theo dõi drift `REFUND-v4`)* | B3 còn hiệu lực; S8 bổ sung nguồn sự thật `approvals[]` (`ticket_id`, `max_vnd`, `expires_at`, `status`) vs bản ghi ledger — C1/C3.4/C5 | Nguyễn Thanh Tùng |
+| 3 · Bảo mật | **Xong** | Cổng vòng 1 + vòng 2 chặn `directive`/`MERCHANT`/`write_retry`; `--adhoc` O-1025/O-1024 đã xanh ở B7.3; S8 không mở thêm bề mặt prompt-injection mới | Lý Thanh Lâm |
+| 4 · Quyền hạn | **Xong** | S8: `_approval_failure_reasons` + `write_gate(issue_refund)` chặn used/revoked/hết hạn/vượt `max_vnd`/sai ticket; C3.1 dòng hoàn trên hạn mức + C3.4; `switches.json` còn on, có thể tắt theo `stop_conditions` | Lý Thanh Lâm |
+| 5 · Hiệu năng, hạ tầng | **Xong** | `cost_budget_per_ticket_vnd=1100`; `reviewers_on_shift=2` · `review_capacity_per_hour=12` · SLA `60`; B7.6 + `stop_conditions` S8 (không đẩy sampling lên 100%) | Vũ Trí Dũng |
+| 6 · Chi phí | **Xong** | `business` giữ `daily_refund_cap=1000000`, `roi_min=0.3`; S8 after: `cost_per_ticket=3529` · `ROI=1.83` (base thẻ từng `11225đ`, ROI `-2.45`) | Nguyễn Thanh Tùng |
+| 7 · Vận hành | **Xong** | `operating_gates.json` vòng 2: `decision_note=true`, `review_sampling_pct=10`, `approver_id=NV-HANH`, `stop_conditions` thêm nhánh lòng tin S8; Runbook 1–3 (B7.5) + Runbook 4–5 (C11); prepared/after: `queue_stuck=0`, niềm tin duyệt **đạt** | Phạm Trung Kiên |
+| 8 · Con người, pháp lý | **Xong** | `legal.pii_fields_blocked_to_third_party` + `carrier_fault_requires_recorded_cause=true`; S8 C3.4 hiệu chỉnh lòng tin `NV-HANH`/ca duyệt; `stop_conditions` cấm tự gắn tên đứng tên oan; PII leaks after = 0 | Phạm Trung Kiên |
+| 9 · Quyết định | **Chưa** *(chờ C12 v2 + `--collect`)* | Tiêu chí đã ký `6b7d9fa` / hash `c69feffb`; v1 đã chốt ở B8; v2 (C12) và `submission.json` còn TV3/TV4 hoàn tất trước CP5 | Nguyễn Thanh Tùng |
 
 ### Runbook 4 · Sau sự cố trên thẻ (vòng 2)
 
 | Câu hỏi | Trả lời |
 |---|---|
-| Tín hiệu nào ở Runbook 2 (Phiếu B mục B7.5) lẽ ra phải báo trước sự cố này? Nó đã có chưa? | |
-| Bàn thêm hoặc đổi ngưỡng nào, từ bao nhiêu thành bao nhiêu? | |
-| Bàn đổi gì về **người** (số người trực, ai đứng tên, ai được gọi)? | |
-| Bàn đổi gì về **phạm vi** hoặc **quy trình** (kiểm mẫu, ghi chú giải thích, trần)? | |
-| Nói gì với bên thứ ba bị ảnh hưởng (hãng, shop, người nhận, nhân viên duyệt), ai nói, trong bao lâu? | |
-| Dữ liệu cá nhân nào đã rời hệ thống mà không thu hồi được? Báo cho ai? | |
-| Sự cố lộ ra trước qua số máy đo, phản hồi của người, hay đọc nội dung? Nguồn nào bàn chưa có? | |
+| Tín hiệu nào ở Runbook 2 (Phiếu B mục B7.5) lẽ ra phải báo trước sự cố này? Nó đã có chưa? | Tín hiệu **Tiền hoàn sai**, **Thời gian chờ / số ca ùn**, và tín hiệu riêng **niềm tin duyệt / phê duyệt INVALID**. Trước S8, Runbook 2 đã có hoàn sai + hàng chờ nhưng **chưa** có ngưỡng đỏ riêng “có hoàn dùng `approval_id` không hợp lệ trong ngày → escalate bắt buộc / báo `NV-HANH`”. Vòng 2 đã bổ sung vào `operations.stop_conditions` (dòng S8 · lòng tin duyệt). |
+| Bàn thêm hoặc đổi ngưỡng nào, từ bao nhiêu thành bao nhiêu? | Giữ `decision_note: false→true` và `review_sampling_pct: 0→10` (đã có từ vòng 1). Vòng 2 **không** tăng sampling lên 100%. Thêm stop: nếu còn hoàn dùng approval INVALID hoặc niềm tin = chưa đạt → chỉ `escalate` về `NV-HANH`, báo trong **15 phút**. `business` giữ `daily_refund_cap=1000000`, `cost_budget=1100`, `roi_min=0.3`, `pilot_scope=all`. |
+| Bàn đổi gì về **người** (số người trực, ai đứng tên, ai được gọi)? | Giữ `reviewers_on_shift=2` · công suất `12` ca/giờ (đủ khi trust đạt; base S8 với 100% recheck từng ùn 36 ca). Người đứng tên vẫn `approver_id=NV-HANH`; PIC `NV-TUNG` bấm công tắc/báo tin; `alert_channel` thêm mention `@NV-OANH` khi lệch sổ/approval. **Cấm** tự gắn tên chị khi mã INVALID. |
+| Bàn đổi gì về **phạm vi** hoặc **quy trình** (kiểm mẫu, ghi chú giải thích, trần)? | Phạm vi vẫn `all/100%` vì after đã xanh và ROI `1.83`. Quy trình: mọi `issue_refund` trên hạn mức phải qua `_approval_failure_reasons`; có `decision_note`; kiểm mẫu cố định `10%` — nếu ca muốn kiểm 100% thì coi là tín hiệu đỏ vận hành (gọi người / thu hẹp), không phải chế độ mặc định. |
+| Nói gì với bên thứ ba bị ảnh hưởng (hãng, shop, người nhận, nhân viên duyệt), ai nói, trong bao lâu? | **Trong 15 phút:** `NV-TUNG` thông báo trên Slack cho ca CSKH + `NV-HANH`: các khoản gắn mã INVALID đã bị chặn/escalate, chị không còn bị ghi nhận duyệt oan trên các ticket mới. **Trong 1 ngày làm việc:** `NV-OANH` gửi biên bản đối soát nội bộ (không cần hãng/shop nếu không có PII/trừ sai thêm). Nhân viên duyệt: được biết điều kiện trở lại kiểm mẫu (`decision_note`, `10%`, 0 hoàn approval lỗi trong ngày). |
+| Dữ liệu cá nhân nào đã rời hệ thống mà không thu hồi được? Báo cho ai? | Trên thẻ S8 trọng tâm không phải lộ PII người nhận (`pii_leaks=0` ở base/prepared/after). Dữ liệu “nhạy” là **danh tính người đứng tên duyệt** (`approver_id`) đi vào sổ/kiểm toán. Không thu hồi được các dòng ledger đã ghi ở mốc base — `NV-OANH` đánh dấu sổ tuần; `NV-HANH` được sao kê các `approval_id` INVALID. |
+| Sự cố lộ ra trước qua số máy đo, phản hồi của người, hay đọc nội dung? Nguồn nào bàn chưa có? | Lộ trước bằng **phản hồi người** (tin nhắn trưởng ca + bảng kiểm toán), sau đó máy đo xác nhận (`recheck=100%`, `queue_stuck`, hoàn sai). Bàn chưa có kênh realtime “approval INVALID count / ngày” trên dashboard production — cần monitor TV2 (C8) + cảnh báo `alert_channel`. |
 
 ### Runbook 5 · Ba kịch bản "nếu … thì …" cho tuần đầu chạy thử thật
 
-1. Nếu số ticket tăng gấp ___ lần trong một giờ thì: …
-2. Nếu nhà cung cấp LLM lỗi quá ___ phút thì: …
-3. Nếu người duyệt báo không tin một quyết định của trợ lý thì: …
+1. Nếu số ticket tăng gấp **3** lần trong một giờ thì: `NV-TUNG` gọi thêm người trong hạn mức đã cấu hình (`reviewers_on_shift` tối đa vận hành ca; công suất mục tiêu `12` ca/giờ với 2 người); nếu ca chờ `> 45` phút (vàng) hoặc `> 60` phút / `queue_stuck > 0` (đỏ) → thu hẹp `pilot_scope` (warehouse/percent) theo `stop_conditions`, **không** chuyển sang kiểm tay 100% làm mặc định.
+2. Nếu nhà cung cấp LLM lỗi quá **15** phút thì: tắt nhánh tự động dựa LLM (`fail_open` đã bị guard chặn); ticket mới `escalate` về hàng chờ `NV-HANH`; giữ `cost_budget_per_ticket_vnd=1100` để không đốt retry; `NV-TUNG` cập nhật Slack mỗi 15 phút đến khi LLM ổn định mới bật lại đọc máy.
+3. Nếu người duyệt báo không tin một quyết định của trợ lý thì: mở ticket đó + 10 quyết định kề bên; kiểm `approval_id` / `decision_note` / ledger; nếu phát hiện approval INVALID hoặc đứng tên oan → áp `stop_conditions` S8 (chỉ escalate trên hạn mức, báo `NV-HANH` trong 15 phút); chỉ trở lại kiểm mẫu `10%` khi trong ngày không còn hoàn dùng phê duyệt lỗi và niềm tin duyệt = **đạt**.
 
 ---
 

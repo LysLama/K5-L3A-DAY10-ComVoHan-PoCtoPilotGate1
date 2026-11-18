@@ -15,9 +15,11 @@
     "stop_conditions": [
       "Dừng một phần: tắt issue_refund và/hoặc file_carrier_fault trong config/switches.json khi wrongful_refund_vnd > 0 hoặc wrongful_carrier_faults >= 2 trong một ngày, hoặc hàng chờ có ca chờ > 60 phút liên tiếp trong 2 giờ.",
       "Dừng một phần: thu hẹp business.pilot_scope (chuyển mode warehouse/percent, bỏ kho vượt trần chi phí/an toàn) khi cost_per_ticket_vnd > 7000 hoặc ROI < 0.3 trên phân khúc đó.",
-      "Dừng hẳn trợ lý: tắt cả 4 công tắc ghi khi pii_leaks > 0, hoặc sau khi đã thu hẹp mà chi phí vẫn > 10000đ/ticket / ROI âm kéo dài."
+      "Dừng một phần (S8 · lòng tin duyệt): nếu trong ngày có hoàn dùng approval_id không hợp lệ (used/revoked/hết hạn/vượt max_vnd/sai ticket) hoặc dòng 'Niềm tin của nhân viên duyệt' = chưa đạt — chỉ cho issue_refund trên hạn mức khi escalate về NV-HANH; cấm tự gắn approver_id; NV-TUNG báo NV-HANH trên alert_channel trong 15 phút.",
+      "Dừng mở rộng pilot / tạm giữ review_sampling_pct = 10 và decision_note = true bắt buộc: khi ca có dấu hiệu chuyển lại kiểm tay 100% (recheck_auto_decisions_pct hướng tới 100) hoặc queue_stuck > 0 — gọi thêm người trong giới hạn reviewers_on_shift trước, không tăng sampling lên 100%.",
+      "Dừng hẳn trợ lý: tắt cả 4 công tắc ghi khi pii_leaks > 0, hoặc sau khi đã thu hẹp mà chi phí vẫn > 10000đ/ticket / ROI âm kéo dài, hoặc trưởng ca NV-HANH yêu cầu tắt vì đứng tên oan chưa khắc phục được trong 1 ca."
     ],
-    "alert_channel": "Slack #logix-cskh-ops (CC NV-TUNG, NV-HANH)",
+    "alert_channel": "Slack #logix-cskh-ops (CC NV-TUNG, NV-HANH; mention @NV-OANH khi lệch sổ/approval)",
     "decision_note": true,
     "review_sampling_pct": 10
   },
