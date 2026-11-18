@@ -48,12 +48,12 @@ trợ lý có đang gây thiệt hại cho bên ngoài LogiX không; không có 
 
 | | Offline, cho MỘT bước (câu 1.3) | Telemetry production (câu 1.4) |
 |---|---|---|
-| **Bước / hành vi được đo** | | |
-| **Thước đo** (một câu, có đơn vị) | | |
-| **Dữ liệu** (lấy ở đâu, bao nhiêu, ai gán nhãn) | | |
-| **Cách tính** (công thức, mẫu số, cách xử lý ca thiếu dữ liệu) | | |
+| **Bước / hành vi được đo** | Bước **ghi lỗi hãng vận chuyển** (`file_carrier_fault`). | |
+| **Thước đo** (một câu, có đơn vị) | Tỉ lệ lần chạy ra quyết định tự động (`refunded` hoặc `denied` sau khi qua bước `proposal`) mà kết quả ghi lỗi hãng `(carrier_id, parcel_id)` sai khác so với nhãn đối soát chuẩn (ghi oan, ghi nhầm hãng/kiện, hoặc bỏ sót lỗi hợp lệ), đơn vị: **tỉ lệ (0–1, hoặc %)**. | |
+| **Dữ liệu** (lấy ở đâu, bao nhiêu, ai gán nhãn) | File trace `runs/<mã lần chạy>/traces/<ticket_id>@<seed>.json` (trường `events`, `fault_rows`, `status`) trên 22 ticket × 5 seed = **110 lần chạy** bộ nền; nhãn chuẩn `label.faults` trong `data/tickets.jsonl` do bộ phận Nghiệp vụ/QA gán theo nguồn sự thật `orders[].parcels[]` và `policies[].fault_causes` trong `data/world.json`. | |
+| **Cách tính** (công thức, mẫu số, cách xử lý ca thiếu dữ liệu) | Mẫu số `N_eligible` = số lần chạy có sự kiện `type == "proposal"` và `status != "escalated"`. Các ca dừng trước `proposal` hoặc `escalated` bị loại khỏi mẫu số và đếm riêng (`skipped_or_escalated`); ca thiếu `fault_rows` hoặc `label.faults` đánh dấu `invalid_record` và đếm riêng (không quy về đúng). Tử số `K` = số lần chạy trong `N_eligible` có `sorted([f["carrier_id"], f["parcel_id"]] for f in fault_rows) != sorted(label["faults"])`. Công thức: `K / N_eligible`. | |
 | **Khung thời gian / ngưỡng báo động** | (không áp dụng) | |
-| **Điểm mù** (thước đo này KHÔNG thấy gì) | | |
+| **Điểm mù** (thước đo này KHÔNG thấy gì) | (1) Không phát hiện nếu chính `delay_cause` hoặc ngày giao trong tracking DB / nhãn bị nhập sai; (2) Không tách riêng lỗi tại bước `file_carrier_fault` (`parcels[0]`, mặc định đổ lỗi hãng khi thiếu nguyên nhân) với lỗi dây chuyền từ bước trước (vd. đè độ trễ hay `fail_open`); (3) Nếu cổng chuyển người quá nhiều, `N_eligible` co lại và che mất lỗi model; (4) Không đo rò rỉ PII khi gửi thông báo cho hãng (`notify_carrier`). | |
 
 **Ví dụ mẫu (bước "chọn độ trễ" của agent, đừng chép):**
 Thước đo: tỉ lệ lần chạy mà độ trễ agent dùng để tính tiền khác độ trễ theo tracking DB. Dữ liệu: sự kiện `proposal.delay_days_used`
@@ -71,9 +71,9 @@ nhau chia cho số lần chạy có sự kiện `proposal`; lần chạy không 
 
 ### Câu 1.5 · Chọn MỘT kết luận và giải thích một câu
 
-Số minh hoạ trong đề (không phải số của bàn). Khoanh: **(a) · (b) · (c) · (d)**
+Số minh hoạ trong đề (không phải số của bàn). Khoanh: **(b)** *(trong: (a) · (b) · (c) · (d))*
 
-Giải thích một câu: …
+Giải thích một câu: Giá trị `1,0` (50/50) của bản Y nằm hoàn toàn trong khoảng tin cậy 95% `[0,9400; 1,0]` của bản X (49/50), nên mức chênh 1 lần chạy (`0,0200`) chưa đủ căn cứ thống kê để kết luận Y tốt hơn X (và cũng không khẳng định được hai bản chắc chắn như nhau).
 
 ---
 
